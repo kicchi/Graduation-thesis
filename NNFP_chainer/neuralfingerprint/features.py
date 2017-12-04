@@ -1,5 +1,4 @@
-#import autograd.numpy as np
-import numpy as np
+import autograd.numpy as np
 from rdkit import Chem
 from util import one_of_k_encoding, one_of_k_encoding_unk
 

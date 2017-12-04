@@ -22,7 +22,6 @@ class MolGraph(object):
     def sort_nodes_by_degree(self, ntype):
         nodes_by_degree = {i : [] for i in degrees}
         for node in self.nodes[ntype]:
-            #print type(node)
             nodes_by_degree[len(node.get_neighbors(ntype))].append(node)
 
         new_nodes = []

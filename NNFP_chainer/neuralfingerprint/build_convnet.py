@@ -1,5 +1,4 @@
 import autograd.numpy as np
-#import numpy as np
 from autograd.scipy.misc import logsumexp
 
 from features import num_atom_features, num_bond_features
