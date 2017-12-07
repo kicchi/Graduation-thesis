@@ -28,6 +28,7 @@ def binary_classification_nll(predictions, targets):
     label_probabilities = pred_probs * targets + (1 - pred_probs) * (1 - targets)
     return -np.mean(np.log(label_probabilities))
 
+
 def build_standard_net(layer_sizes, normalize, L2_reg, L1_reg=0.0, activation_function=relu,
                        nll_func=mean_squared_error):
     """Just a plain old neural net, nothing to do with molecules.

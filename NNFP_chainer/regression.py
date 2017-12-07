@@ -5,12 +5,12 @@
 import autograd.numpy as np
 import autograd.numpy.random as npr
 
-from neuralfingerprint import load_data
-from neuralfingerprint import build_morgan_deep_net
-from neuralfingerprint import build_conv_deep_net
-from neuralfingerprint import normalize_array, adam
-from neuralfingerprint import build_batched_grad
-from neuralfingerprint.util import rmse
+from neuralfingerptint import load_data
+from neuralfingerptint import build_morgan_deep_net
+from neuralfingerptint import build_conv_deep_net
+from neuralfingerptint import normalize_array, adam
+from neuralfingerptint import build_batched_grad
+from neuralfingerptint.util import rmse
 
 from autograd import grad
 

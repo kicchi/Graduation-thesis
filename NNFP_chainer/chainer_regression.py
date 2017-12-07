@@ -9,11 +9,11 @@ from chainer import Link, Chain, ChainList
 import chainer.function as F
 import chainer.links as L
 
-from neuralfingerprint import load_data
-from neuralfingerprint import build_conv_deep_net
-from neuralfingerprint import normalize_array, adam
-from neuralfingerprint import build_batched_grad
-from neuralfingerprint.util import  rmse
+from chainer_nn import load_data
+from chainer_nn import build_conv_deep_net
+from chainer_nn import normalize_array, adam
+from chainer_nn import build_batched_grad
+from chainer_nn.util import  rmse
 
 
 task_params = {'target_name' : 'measured log solubility in mols per litre',
