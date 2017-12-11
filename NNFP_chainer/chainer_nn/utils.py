@@ -131,7 +131,7 @@ def get_ith_minivatch_ixs(i, num_datapoints, batch_size):
 	stop = start + batch_size
 	return slice(start, stop)
 
-def build_batced_grad(grad, batch_size, inputs, targets):
+def build_batched_grad(grad, batch_size, inputs, targets):
 	"""Grad has signature(weights, inputs, targets)."""
 	def batched_grad(weights, i):
 		cur_idxs = get_ith_minivatch_ixs(i, len(targets), batche_size)

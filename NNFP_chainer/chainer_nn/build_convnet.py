@@ -123,7 +123,7 @@ def array_rep_from_smiles(smiles):
 			np.array(molgraph.neighbor_list(('atom', degree), 'bond'), dtype=int)
 	return arrayrep
 
-def build_convnet_deep_net(conv_params, net_params, fp_l2_penalty=0.0):
+def build_conv_deep_net(conv_params, net_params, fp_l2_penalty=0.0):
 	"""Returns loss_fun(all_weights, smiles, targets), pred_fun, combined_parse."""
 	conv_fp_func, conv_parser = build_convnet_fingerprint_fun(**conv_params)
 	return build_fingerprint_deep_net(net_params, conv_fp_func, conv_parser, fp_l2_penalty)

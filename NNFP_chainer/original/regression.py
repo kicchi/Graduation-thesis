@@ -57,10 +57,17 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
                 print "Validation RMSE", iter, ":", rmse(validation_preds, validation_raw_targets),
 
     # Build gradient using autograd.
+
     grad_fun = grad(loss_fun)
     grad_fun_with_data = build_batched_grad(grad_fun, train_params['batch_size'],
                                             train_smiles, train_targets)
-
+    print "loss fun"
+    print loss_fun
+    print "grad_fun"
+    print grad_fun
+    print "grad_fun_with_data"
+    print grad_fun_with_data
+    import pdb; pdb.set_trace()
     # Optimize weights.
     trained_weights = adam(grad_fun_with_data, init_weights, callback=callback,
                            num_iters=train_params['num_iters'], step_size=train_params['step_size'])

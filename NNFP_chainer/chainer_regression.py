@@ -13,7 +13,7 @@ from chainer_nn import load_data
 from chainer_nn import build_conv_deep_net
 from chainer_nn import normalize_array, adam
 from chainer_nn import build_batched_grad
-from chainer_nn.util import  rmse
+from chainer_nn.utils import  rmse
 
 
 task_params = {'target_name' : 'measured log solubility in mols per litre',

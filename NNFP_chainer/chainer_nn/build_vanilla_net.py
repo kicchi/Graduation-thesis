@@ -20,7 +20,7 @@ def mean_squared_error(predictions, targets):
 def categorical_nll(predictions, targets):
 	return -np.mean(predictions * targets)
 
-def binary_classificattion_nll(predictions, targets):
+def binary_classification_nll(predictions, targets):
 	"""Predictions is a real number, whose sigmoid is the probability that the target is 1."""
 	pred_probs = sigmoid(predictions)
 	label_probabilities = pred_probs * targets + (1 - pred_probs) * (1 - targets)

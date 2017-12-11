@@ -68,10 +68,7 @@ def build_fingerprint_deep_net(net_params, fingerprint_func, fp_parser, fp_l2_pe
 
     combined_parser = WeightsParser()
     combined_parser.add_weights('fingerprint weights', (len(fp_parser),))
-    print "fp weights num " , len(combined_parser)  #my add
-    fp_w_num = len(combined_parser) #my add
     combined_parser.add_weights('net weights', (len(net_parser),))
-    print "net weights num " , len(combined_parser) - fp_w_num #my add
     print "total weights num " , len(combined_parser)
 
     def unpack_weights(weights):
