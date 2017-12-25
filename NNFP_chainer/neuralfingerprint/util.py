@@ -70,7 +70,7 @@ def normalize_array(A):
     def restore_function(X):
         return X * std + mean
 
-    return A_normed, restore_function
+    return A_normed.astype(np.float32), restore_function
 
 @contextmanager
 def tictoc():

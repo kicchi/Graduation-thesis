@@ -18,6 +18,7 @@ def softmax(X, axis=0):
 
 def matmult_neighbors(array_rep, atom_features, bond_features, get_weights):
     activations_by_degree = []
+    #print get_weights
     for degree in degrees:
         atom_neighbors_list = array_rep[('atom_neighbors', degree)]
         bond_neighbors_list = array_rep[('bond_neighbors', degree)]
@@ -36,9 +37,7 @@ def matmult_neighbors(array_rep, atom_features, bond_features, get_weights):
 def weights_name(layer, degree):
     return "layer " + str(layer) + " degree " + str(degree) + " filter"
 
-def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
-                                  normalize=True, activation_function=relu,
-                                  return_atom_activations=False):
+def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,normalize=True, activation_function=relu,return_atom_activations=False):
     """Sets up functions to compute convnets over all molecules in a minibatch together."""
 
     # Specify weight shapes.
@@ -55,6 +54,10 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
         for degree in degrees:
             parser.add_weights(weights_name(layer, degree), (N_prev + num_bond_features(), N_cur))
 
+	#print "##########parser.idxs_and_shapes##########"
+	#for itm in parser.idxs_and_shapes:
+	#	print itm
+
     def update_layer(weights, layer, atom_features, bond_features, array_rep, normalize=False):
         def get_weights_func(degree):
             return parser.get(weights, weights_name(layer, degree))
@@ -62,10 +65,13 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
         layer_self_weights = parser.get(weights, ("layer", layer, "self filter"))
         #print "layer_bias " , layer_bias
         self_activations = np.dot(atom_features, layer_self_weights)
-        neighbour_activations = matmult_neighbors(
+        neighbor_activations = matmult_neighbors(
             array_rep, atom_features, bond_features, get_weights_func)
+        #print  "debug"
+        #print  neighbor_activations.shape
+        #print  self_activations.shape
 
-        total_activations = neighbour_activations + self_activations + layer_bias
+        total_activations = neighbor_activations + self_activations + layer_bias
         if normalize:
             total_activations = batch_normalize(total_activations)
         return activation_function(total_activations)
@@ -74,6 +80,8 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
         """Computes layer-wise convolution, and returns a fixed-size output."""
 
         array_rep = array_rep_from_smiles(tuple(smiles))
+        #print "##########array_rep###########"
+		
         atom_features = array_rep['atom_features']
         bond_features = array_rep['bond_features']
 

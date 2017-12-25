@@ -1,7 +1,8 @@
 import numpy as np
 from rdkit.Chem import MolFromSmiles
 from features import atom_features, bond_features
-
+from chainer import Variable
+from chainer.variable import variable_str
 degrees = [0, 1, 2, 3, 4, 5]
 
 class MolGraph(object):
@@ -74,9 +75,14 @@ def graph_from_smiles_tuple(smiles_tuple):
 
 def graph_from_smiles(smiles):
     graph = MolGraph()
-    mol = MolFromSmiles(smiles)
+    check = np.array(1)
+    if type(check) is not type(smiles):
+        str_smiles = smiles._data[0][0]
+    else:
+		str_smiles = smiles[0]
+    mol = MolFromSmiles(str_smiles)
     if not mol:
-        raise ValueError("Could not parse SMILES string:", smiles)
+        raise ValueError("Could not parse SMILES string:", str_smiles)
     atoms_by_rd_idx = {}
     for atom in mol.GetAtoms():
         new_atom_node = graph.new_node('atom', features=atom_features(atom), rdkit_ix=atom.GetIdx())

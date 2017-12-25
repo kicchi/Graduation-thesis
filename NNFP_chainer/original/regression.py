@@ -1,3 +1,4 @@
+#coding: utf-8
 # Example regression script using neural fingerprints.
 #
 # Compares Morgan fingerprints to neural fingerprints.
@@ -5,20 +6,20 @@
 import autograd.numpy as np
 import autograd.numpy.random as npr
 
-from neuralfingerprint import load_data
-from neuralfingerprint import build_morgan_deep_net
-from neuralfingerprint import build_conv_deep_net
-from neuralfingerprint import normalize_array, adam
-from neuralfingerprint import build_batched_grad
+from neuralfingerprint import load_data					#io_utils
+from neuralfingerprint import build_morgan_deep_net		#build_vanilla
+from neuralfingerprint import build_conv_deep_net		#build_convnet
+from neuralfingerprint import normalize_array, adam		#optimizer
+from neuralfingerprint import build_batched_grad		#utils
 from neuralfingerprint.util import rmse
 
 from autograd import grad
 
 task_params = {'target_name' : 'measured log solubility in mols per litre',
                'data_file'   : 'delaney.csv'}
-N_train = 800
-N_val   = 20
-N_test  = 20
+N_train = 8
+N_val   = 2
+N_test  = 2
 
 model_params = dict(fp_length=50,    # Usually neural fps need far fewer dimensions than morgan.
                     fp_depth=4,      # The depth of the network equals the fingerprint radius.
@@ -50,6 +51,8 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
             train_preds = undo_norm(pred_fun(weights, train_smiles[:num_print_examples]))
             cur_loss = loss_fun(weights, train_smiles[:num_print_examples], train_targets[:num_print_examples])
             training_curve.append(cur_loss)
+            #print "train_pred = ", train_preds
+            #print "train_raw = ", train_raw_targets[:num_print_examples]
             print "Iteration", iter, "loss", cur_loss,\
                   "train RMSE", rmse(train_preds, train_raw_targets[:num_print_examples]),
             if validation_smiles is not None:
@@ -61,13 +64,6 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
     grad_fun = grad(loss_fun)
     grad_fun_with_data = build_batched_grad(grad_fun, train_params['batch_size'],
                                             train_smiles, train_targets)
-    print "loss fun"
-    print loss_fun
-    print "grad_fun"
-    print grad_fun
-    print "grad_fun_with_data"
-    print grad_fun_with_data
-    import pdb; pdb.set_trace()
     # Optimize weights.
     trained_weights = adam(grad_fun_with_data, init_weights, callback=callback,
                            num_iters=train_params['num_iters'], step_size=train_params['step_size'])
@@ -111,6 +107,7 @@ def main():
         conv_layer_sizes = [model_params['conv_width']] * model_params['fp_depth']
         conv_arch_params = {'num_hidden_features' : conv_layer_sizes,
                             'fp_length' : model_params['fp_length'], 'normalize' : 1}
+		#chainer の書き方だと実装済
         loss_fun, pred_fun, conv_parser = \
             build_conv_deep_net(conv_arch_params, vanilla_net_params, model_params['L2_reg'])
         num_weights = len(conv_parser)
