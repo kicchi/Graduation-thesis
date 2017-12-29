@@ -22,9 +22,9 @@ from neuralfingerprint.utils import  rmse
 task_params = {'target_name' : 'measured log solubility in mols per litre',
 				'data_file'  : 'delaney.csv'}
 
-N_train = 800
-N_val   = 20
-N_test  = 20
+N_train = 20
+N_val   = 2
+N_test  = 2
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
@@ -45,6 +45,11 @@ vanilla_net_params = dict(
 	#nll_func = rmse  ToDo
 	)
 
+def weight_reg(weight, model_params):
+	w = weight._data[0]
+	w = (np.reshape(w, (w.shape[0] * w.shape[1] ,))).astype(np.float32)
+	weight_length = np.array([1], dtype=np.float32)
+	return Variable(-model_params['L2_reg'].astype(np.float32) * np.dot(w, w) / weight_length)
 	
 class Main(Chain):
 	def __init__(self, model_params):
@@ -54,15 +59,28 @@ class Main(Chain):
 		)
 	
 	def __call__(self, x, y):
-		finger_print = self.fp.fwd(x)
-		output = self.dnn.fwd(finger_print)
+		pred = self.prediction(x)
 		check = np.array(1)
-		if type(check) is type(y):
+		if type(check) is type(y): #3回目の更新から急にVariableじゃないのが入ってくる
 			y = Variable(y)
-		return F.mean_squared_error(output, y._data[0].astype(np.float32))
+
+		#log_prior = -L2_reg * np.dot(w, w) / len(w) - L1_reg * np.mean(np.abs(w))
+		l1_reg = weight_reg(self.dnn.l1.W, model_params)
+		l2_reg = weight_reg(self.dnn.l2.W, model_params)
+		#print l1_reg
+		#print l2_reg
+		log_prior = 0
+		#log_prior = l1_reg[0] + l2_reg[0]
+		#import pdb;pdb.set_trace()
+		return F.mean_squared_error(pred, y._data[0].astype(np.float32)) - log_prior
+
+	def prediction(self, x):
+		finger_print = self.fp(x)
+		pred = self.dnn(finger_print)
+		return pred
 	
 
-def train_nn(model, num_weights, train_smiles, train_raw_targets, seed=0,
+def train_nn(model, train_smiles, train_raw_targets, seed=0,
 				validation_smiles=None, validation_raw_targets=None):
 	#init_weight
 	num_print_examples = N_train
@@ -72,21 +90,25 @@ def train_nn(model, num_weights, train_smiles, train_raw_targets, seed=0,
 	optimizer.setup(model)
 	for itr in range(100):
 		x = Variable(train_smiles)
-		y = Variable(train_targets) #raw_targetsは使わない？正規化は平均０、分散１にする操作
+		y = Variable(train_targets) 
 		model.zerograds()
 		loss = model(x, y)
+		#loss と RMSE 何か勘違いしてそう。
 		if itr % 10 == 0:
-			train_preds = undo_norm(model(train_smiles[:num_print_examples], train_targets[:num_print_examples]))
+			train_preds = undo_norm(model(train_smiles, train_targets))
 			cur_loss = loss
 			training_curve.append(cur_loss)
 			print "Iteration", itr, "loss", cur_loss._data[0], \
 				"train RMSE", (train_preds._data[0]),
 			if validation_smiles is not None:
-				validation_preds = undo_norm(model(validation_smiles[:N_val], validation_raw_targets[:N_val]))
+				validation_preds = undo_norm(model(validation_smiles, validation_raw_targets))
 				print  "Validation RMSE", itr, ":", (validation_preds._data[0])
 		loss.backward()
 		optimizer.update()
+
 		
+	print "model's weights"
+	print model.__dict__
 	return model, training_curve
 
 def main():
@@ -102,22 +124,19 @@ def main():
 	x_vals = np.reshape(x_vals, (N_val, 1))
 	y_vals = np.reshape(y_vals, (N_val, 1))
 	x_tests = np.reshape(x_tests, (N_test, 1))
-	y_tests = np.reshape(y_tests, (N_test, 1))
+	y_tests = np.reshape(y_tests, (N_test, 1)).astype(np.float32)
 
 	def run_conv_experiment():
 		conv_layer_sizes = [model_params['conv_width']] * model_params['fp_length']
 		conv_arch_params = {'num_hidden_features' : conv_layer_sizes,  
 							'fp_length' : model_params['fp_length'], 'normalize' : 1}
 		'''Initialize model'''
-		NNFP = Main(model_params) #parameter is given to Main(...)
+		NNFP = Main(model_params) 
 		optimizer = optimizers.Adam()
 		optimizer.setup(NNFP)
-
-		#num_weights = len(conv_parser) パラメータの総数後で出す
-		num_weights = 32591
 		'''Learn'''
 		trained_NNFP, conv_training_curve = \
-			train_nn(NNFP, num_weights, 
+			train_nn(NNFP, 
 					x_trains, y_trains,  
 					validation_smiles=x_vals, 
 					validation_raw_targets=y_vals)
@@ -126,10 +145,10 @@ def main():
 		#test_inputs is smiles
 		test_inputs = Variable(x_tests)
 		test_targets = Variable(y_tests)
-		test_predictions = trained_NNFP(test_inputs, test_targets)
+		test_predictions = trained_NNFP.prediction(test_inputs)
 	
 		#type is correspond?
-		return test_predictions._data[0]
+		return F.mean_squared_error(test_predictions, test_targets)._data[0]
 
 	print "Starting neural fingerprint experiment..."
 	test_loss_neural = run_conv_experiment()

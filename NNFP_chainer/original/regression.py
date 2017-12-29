@@ -17,9 +17,9 @@ from autograd import grad
 
 task_params = {'target_name' : 'measured log solubility in mols per litre',
                'data_file'   : 'delaney.csv'}
-N_train = 8
-N_val   = 2
-N_test  = 2
+N_train = 200
+N_val   = 20
+N_test  = 20
 
 model_params = dict(fp_length=50,    # Usually neural fps need far fewer dimensions than morgan.
                     fp_depth=4,      # The depth of the network equals the fingerprint radius.

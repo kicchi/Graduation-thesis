@@ -54,6 +54,7 @@ def build_standard_net(layer_sizes, normalize, L2_reg, L1_reg=0.0, activation_fu
 
     def loss(w, X, targets):
         assert len(w) > 0
+		
         log_prior = -L2_reg * np.dot(w, w) / len(w) - L1_reg * np.mean(np.abs(w))
         preds = predictions(w, X)
         return nll_func(preds, targets) - log_prior
