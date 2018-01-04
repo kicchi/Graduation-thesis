@@ -1,6 +1,5 @@
 #coding: utf-8
 import numpy as np
-import numpy.random as npr
 #import cupy as cp #GPUを使うためのnumpy
 import chainer 
 from chainer import cuda, Function, gradient_check, \
@@ -8,19 +7,60 @@ from chainer import cuda, Function, gradient_check, \
 from chainer import Link, Chain, ChainList
 import chainer.functions as F
 import chainer.links as L
-import random
 from collections import OrderedDict
 from features import num_atom_features, num_bond_features
-from mol_graph import degrees
-from build_convnet import matmult_neighbors, array_rep_from_smiles, softmax, sum_and_stack
-from build_vanilla_net import batch_normalize
+from mol_graph import graph_from_smiles_tuple, degrees
 
+def fast_array_from_list(xs):
+    fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
+    for x in xs:
+        fast_array = F.concat((fast_array, (F.expand_dims(x, axis=0))), axis=0)
+    return fast_array
+
+def sum_and_stack(features, idxs_list_of_lists):
+    return fast_array_from_list([F.sum(features[idx_list], axis=0) for idx_list in idxs_list_of_lists])
+
+def array_rep_from_smiles(smiles):
+    """Precompute everything we need from MolGraph so that we can free the memory asap."""
+    molgraph = graph_from_smiles_tuple(smiles)
+    arrayrep = {'atom_features' : molgraph.feature_array('atom'),
+                'bond_features' : molgraph.feature_array('bond'),
+                'atom_list'     : molgraph.neighbor_list('molecule', 'atom'), # List of lists.
+                'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
+    for degree in degrees:
+        arrayrep[('atom_neighbors', degree)] = \
+            np.array(molgraph.neighbor_list(('atom', degree), 'atom'), dtype=int)
+        arrayrep[('bond_neighbors', degree)] = \
+            np.array(molgraph.neighbor_list(('atom', degree), 'bond'), dtype=int)
+    return arrayrep
+
+def build_conv_deep_net(conv_params, net_params, fp_l2_penalty=0.0):
+    """Returns loss_fun(all_weights, smiles, targets), pred_fun, combined_parser."""
+    conv_fp_func, conv_parser = build_convnet_fingerprint_fun(**conv_params)
+    return build_fingerprint_deep_net(net_params, conv_fp_func, conv_parser, fp_l2_penalty)
+
+
+def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights_func):
+    activations_by_degree = np.empty((0,20), dtype=np.float32)
+    for degree in degrees:
+        get_weights = eval(get_weights_func(degree))
+        atom_neighbors_list = array_rep[('atom_neighbors', degree)]
+        bond_neighbors_list = array_rep[('bond_neighbors', degree)]
+        if len(atom_neighbors_list) > 0:
+            neighbor_features = [atom_features[atom_neighbors_list],
+                                 bond_features[bond_neighbors_list]]
+            stacked_neighbors = np.concatenate(neighbor_features, axis=2)
+            summed_neighbors = F.sum(stacked_neighbors,axis=1)
+            activations = get_weights(summed_neighbors)
+            activations_by_degree = F.concat((activations_by_degree, activations), axis=0)
+    return activations_by_degree
 
 def weights_name(layer, degree):
     return "layer_" + str(layer) + "_degree_" + str(degree) + "_filter"
 
 def bool_to_float32(features):
-	return np.array(features).astype(np.float32)	
+	return np.array(features).astype(np.float32)
+
 
 def build_weights(self, model_params):
 	initializer = chainer.initializers.HeNormal() 
@@ -42,8 +82,8 @@ def build_weights(self, model_params):
 
 def batch_normalize(activations):
 	activations = activations._data[0]
-	mbmean = np.mean(activations, axis=0, keepdims=True)
-	return (activations - mbmean) / (np.std(activations, axis=0, keepdims=True) + 1)
+	mbmean = np.mean(activations)
+	return Variable((activations - mbmean) / (np.std(activations, axis=0, keepdims=True) + 1))
 
 class FP(Chain):
 	def __init__(self, model_params):
@@ -60,14 +100,10 @@ class FP(Chain):
 			layer_self_weights = eval("self.layer_" + str(layer) + "_self_filter")
 
 			self_activations = layer_self_weights(atom_features)
-			neighbor_activations = (matmult_neighbors(self,
-				array_rep, atom_features, bond_features, get_weights_func))
-
+			neighbor_activations = matmult_neighbors(self,
+				array_rep, atom_features, bond_features, get_weights_func)
 			total_activations = neighbor_activations + self_activations
-			#print total_activations
-			#import pdb;pdb.set_trace()
 			if normalize:
-				#print "in normalize"
 				total_activations = batch_normalize(total_activations)
 			return F.relu(total_activations)
 

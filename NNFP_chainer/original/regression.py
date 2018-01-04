@@ -51,8 +51,6 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
             train_preds = undo_norm(pred_fun(weights, train_smiles[:num_print_examples]))
             cur_loss = loss_fun(weights, train_smiles[:num_print_examples], train_targets[:num_print_examples])
             training_curve.append(cur_loss)
-            #print "train_pred = ", train_preds
-            #print "train_raw = ", train_raw_targets[:num_print_examples]
             print "Iteration", iter, "loss", cur_loss,\
                   "train RMSE", rmse(train_preds, train_raw_targets[:num_print_examples]),
             if validation_smiles is not None:

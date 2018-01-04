@@ -4,9 +4,7 @@ import numpy as np
 import chainer 
 from chainer import Link, Chain, Variable
 import chainer.functions as F
-#import chainer.Summary as S
 import chainer.links as L
-from  util import normalize_array
 
 class DNN(Chain):
 	def __init__(self, model_params):
@@ -16,10 +14,10 @@ class DNN(Chain):
 		)
 
 	def __call__(self, x):
+		#print self.l1.W
+		#print self.l2.W
 		h = self.l1(x)
 		o = self.l2(h)
-		#print "o ", o
-		#print "n_o ", self.normalize(o)
 		#return self.normalize(o)
 		return o
 
