@@ -127,7 +127,6 @@ class FP(Chain):
 
 			num_layers = self.model_params['fp_depth']
 			for layer in xrange(num_layers):
-				#global atom_features
 				write_to_fingerprint(self, atom_features, layer)
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=True)
 				atom_features = atom_features._data[0]
