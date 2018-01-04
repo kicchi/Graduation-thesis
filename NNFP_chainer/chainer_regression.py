@@ -55,16 +55,7 @@ class Main(Chain):
 	def __call__(self, x, y):
 		y = Variable(np.array(y, dtype=np.float32))
 		pred = self.prediction(x)
-		#l1_reg = weight_reg(self, self.dnn.l2.W, model_params)
-		#log_prior = l1_reg
-		#print self.fp.layer_output_weights_1.W
-		#print self.fp.__dict__
-		#low = weight_reg(self, self.fp.layer_output_weights_4.W, model_params)
-		#low = weight_reg(self, self.fp.layer_0_self_filter.W, model_params)
-		#low = weight_reg(self, self.fp.layer_1_degree_2_filter.W, model_params)
-		#print low
-		log_prior = 0
-		return F.mean_squared_error(pred, y) + log_prior
+		return F.mean_squared_error(pred, y)
 
 	def prediction(self, x):
 		x = Variable(x)
