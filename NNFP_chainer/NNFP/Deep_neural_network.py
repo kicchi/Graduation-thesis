@@ -11,14 +11,14 @@ class DNN(Chain):
 		super(DNN, self).__init__(
 			l1 = L.Linear(model_params['fp_length'],model_params['h1_size']),
 			l2 = L.Linear(model_params['h1_size'],1),
+			bnorm1 = L.BatchNormalization(model_params['h1_size']),
 		)
 
 	def __call__(self, x):
-		#print self.l1.W
 		#print self.l2.W
 		h = self.l1(x)
-		o = self.l2(h)
-		#return self.normalize(o)
+		bh = self.bnorm1(h)
+		o = self.l2(bh)
 		return o
 
 	def normalize(self, x):
