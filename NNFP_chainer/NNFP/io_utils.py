@@ -1,7 +1,9 @@
+#coding: utf-8
 import os
 import csv
 import numpy as np
 import itertools as it
+from rdkit import Chem
 
 def read_csv(filename, nrows, input_name, target_name):
     data = ([], [])
@@ -11,6 +13,42 @@ def read_csv(filename, nrows, input_name, target_name):
             data[0].append(row[input_name])
             data[1].append(float(row[target_name]))
     return map(np.array, data)
+
+def smiles_from_SDF(filename, sizes):
+	smiles_list = np.empty((1,1))
+	target_list = np.empty((1,1))
+	inf = open(filename,'r')	
+	mol_data =""
+	while 1:
+		line = inf.readline()
+		if not line:
+			break
+		if line[:4] == "$$$$":
+		 	 mol = Chem.MolFromMolBlock(mol_data)
+			 smiles_list = np.append(smiles_list, [[str(Chem.MolToSmiles(mol))]], axis=0)
+			 mol_data = ""
+		elif line.find("ctive"):
+			if line[0] == 'A':
+				target_list = np.append(target_list, [[1]], axis=0)
+			elif line[0] == 'I':
+			 	target_list = np.append(target_list, [[0]], axis=0) 
+			mol_data = mol_data+line
+		else:
+			mol_data = mol_data+line
+
+	slices = []
+	start = 1
+	for size in sizes:
+		stop = start + size 
+		slices.append(slice(start, stop)) 
+		start = stop
+
+	stops = [s.stop for s in slices]
+	if not all(stops):
+		raise Exception("Slices can't be open-ended")
+
+	return [(smiles_list[s], target_list[s]) for s in slices]
+
 
 def load_data(filename, sizes, input_name, target_name):
     slices = []

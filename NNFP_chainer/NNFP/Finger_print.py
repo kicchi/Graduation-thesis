@@ -2,9 +2,8 @@
 import numpy as np
 #import cupy as cp #GPUを使うためのnumpy
 import chainer 
-from chainer import cuda, Function, gradient_check, \
-	Variable, optimizers, serializers, utils, initializers
-from chainer import Link, Chain, ChainList
+from chainer import cuda, Function, Variable, optimizers, initializers
+from chainer import Link, Chain
 import chainer.functions as F
 import chainer.links as L
 from collections import OrderedDict
@@ -33,11 +32,6 @@ def array_rep_from_smiles(smiles):
         arrayrep[('bond_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'bond'), dtype=int)
     return arrayrep
-
-def build_conv_deep_net(conv_params, net_params, fp_l2_penalty=0.0):
-    """Returns loss_fun(all_weights, smiles, targets), pred_fun, combined_parser."""
-    conv_fp_func, conv_parser = build_convnet_fingerprint_fun(**conv_params)
-    return build_fingerprint_deep_net(net_params, conv_fp_func, conv_parser, fp_l2_penalty)
 
 
 def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights_func):
@@ -80,11 +74,6 @@ def build_weights(self, model_params):
 		   	name = weights_name(layer, degree)
 			setattr(self, name, L.Linear(N_prev + num_bond_features(), N_cur,initialW=initializer))
 
-def batch_normalize(activations):
-	activations = activations._data[0]
-	mbmean = np.mean(activations)
-	return Variable((activations - mbmean) / (np.std(activations, axis=0, keepdims=True) + 1))
-
 class FP(Chain):
 	def __init__(self, model_params):
 		super(FP, self).__init__()
@@ -94,7 +83,7 @@ class FP(Chain):
 	def __call__(self, smiles):
 		array_rep = array_rep_from_smiles(tuple(smiles)) #rdkitで計算。smiles to data
 	
-		def update_layer(self, layer, atom_features, bond_features, array_rep, normalize=True):
+		def update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False):
 			def get_weights_func(degree): #layer と degree からパラメータを選択する。
 				return "self.layer_" + str(layer) + "_degree_" + str(degree) + "_filter"
 			layer_self_weights = eval("self.layer_" + str(layer) + "_self_filter")
@@ -103,8 +92,8 @@ class FP(Chain):
 			neighbor_activations = matmult_neighbors(self,
 				array_rep, atom_features, bond_features, get_weights_func)
 			total_activations = neighbor_activations + self_activations
-			if normalize:
-				total_activations = batch_normalize(total_activations)
+			if normalize: #FPでbatch normalizationいらない
+				total_activations = F.batch_normalization(total_activations)
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
@@ -128,7 +117,7 @@ class FP(Chain):
 			num_layers = self.model_params['fp_depth']
 			for layer in xrange(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
-				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=True)
+				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]
 
 			write_to_fingerprint(self, atom_features, num_layers)

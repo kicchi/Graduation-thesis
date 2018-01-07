@@ -1,5 +1,4 @@
-import autograd.numpy as np
-import autograd.numpy.random as npr
+import numpy as np
 
 import sys, signal, pickle
 from contextlib import contextmanager

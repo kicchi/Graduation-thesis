@@ -19,7 +19,7 @@ class DNN(Chain):
 		h = self.l1(x)
 		bh = self.bnorm1(h)
 		o = self.l2(bh)
-		return o
+		return F.sigmoid(o)
 
 	def normalize(self, x):
 		
