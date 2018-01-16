@@ -20,7 +20,7 @@ task_params = {'target_name' : 'measured log solubility in mols per litre',
 				'data_file'  : 'delaney.csv'}
 
 N_train = 700
-N_val   = 1
+N_val   = 20
 N_test  = 100
 
 model_params = dict(fp_length = 50,      

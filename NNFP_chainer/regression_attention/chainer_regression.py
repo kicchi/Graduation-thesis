@@ -19,9 +19,9 @@ from NNFP import Finger_print
 task_params = {'target_name' : 'measured log solubility in mols per litre',
 				'data_file'  : 'delaney.csv'}
 
-N_train = 100
-N_val   = 10
-N_test  = 10
+N_train = 700
+N_val   = 20
+N_test  = 100
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
@@ -38,7 +38,8 @@ train_params = dict(num_iters = 100,
 class Main(Chain):
 	def __init__(self, model_params):
 		super(Main, self).__init__(
-			fp = Finger_print.FP(model_params),
+			build_ecfp = Finger_print.ECFP(model_params),
+			build_fcfp = Finger_print.FCFP(model_params),
 			ecfp_attension = L.Linear(model_params['fp_length'], 1),
 			fcfp_attension = L.Linear(model_params['fp_length'], 1),
 			dnn = Deep_neural_network.DNN(model_params),
@@ -51,17 +52,18 @@ class Main(Chain):
 
 	def prediction(self, x):
 		x = Variable(x)
-		finger_print = self.fp(x)
-		ecfp_beta = self.ecfp_attension(finger_print)
-		#fcfp_beta = self.ecfp_attension(finger_print)
+		ecfp = self.build_ecfp(x)
+		fcfp = self.build_fcfp(x)
+		ecfp_beta = self.ecfp_attension(ecfp)
+		fcfp_beta = self.ecfp_attension(fcfp)
 		
-		#ecfp_alpha = ecfp_beta / (ecfp_beta + fcfp_beta)
-		#fcfp_alpha = fcfp_beta / (ecfp_beta + fcfp_beta)
-		attension_ecfp = F.batch_matmul(finger_print, ecfp_beta)
-		#attension_fcfp = F.batch_matmul(finger_print, fcfp_alpha)
+		ecfp_alpha = ecfp_beta / (ecfp_beta + fcfp_beta)
+		fcfp_alpha = fcfp_beta / (ecfp_beta + fcfp_beta)
+		attension_ecfp = F.batch_matmul(ecfp, ecfp_alpha)
+		attension_fcfp = F.batch_matmul(fcfp, fcfp_alpha)
 
 		pred = self.dnn(attension_ecfp)
-		#pred = self.dnn(attension_fcfp + attension_ecfp)
+		pred = self.dnn(attension_fcfp + attension_ecfp)
 		return pred
 
 	def mse(self, x, y, undo_norm):
@@ -140,7 +142,6 @@ def main():
 
 	print("Starting neural fingerprint experiment...")
 	test_loss_neural, conv_training_curve = run_conv_experiment()
-	print() 
 	print("Neural test RMSE", test_loss_neural)
 	#result_plot(conv_training_curve, train_params)
 

@@ -1,6 +1,6 @@
 import numpy as np
 from rdkit.Chem import MolFromSmiles
-from features import atom_features, bond_features
+from features import atom_features_from_ecfp, atom_features_from_fcfp, bond_features
 from chainer import Variable
 from chainer.variable import variable_str
 degrees = [0, 1, 2, 3, 4, 5]
@@ -63,8 +63,8 @@ class Node(object):
     def get_neighbors(self, ntype):
         return [n for n in self._neighbors if n.ntype == ntype]
 
-def graph_from_smiles_tuple(smiles_tuple):
-    graph_list = [graph_from_smiles(s) for s in smiles_tuple]
+def graph_from_smiles_tuple(smiles_tuple, fp_switch):
+    graph_list = [graph_from_smiles(s, fp_switch) for s in smiles_tuple]
     big_graph = MolGraph()
     for subgraph in graph_list:
         big_graph.add_subgraph(subgraph)
@@ -73,7 +73,7 @@ def graph_from_smiles_tuple(smiles_tuple):
     big_graph.sort_nodes_by_degree('atom')
     return big_graph
 
-def graph_from_smiles(smiles):
+def graph_from_smiles(smiles, fp_switch): #ecfp = false, fcfp = true
     graph = MolGraph()
     check = np.array(1)
     if type(check) is not type(smiles):
@@ -81,12 +81,20 @@ def graph_from_smiles(smiles):
     else:
 		str_smiles = smiles[0]
     mol = MolFromSmiles(str_smiles)
+	
     if not mol:
         raise ValueError("Could not parse SMILES string:", str_smiles)
 
     atoms_by_rd_idx = {}
+    if fp_switch:
+        fcfp = atom_features_from_fcfp(mol)
+    idx = 0
     for atom in mol.GetAtoms():
-        new_atom_node = graph.new_node('atom', features=atom_features(atom), rdkit_ix=atom.GetIdx())
+        if fp_switch:
+            new_atom_node = graph.new_node('atom', features=fcfp[idx], rdkit_ix=atom.GetIdx())
+            idx += 1
+        else:
+            new_atom_node = graph.new_node('atom', features=atom_features_from_ecfp(atom), rdkit_ix=atom.GetIdx())
         atoms_by_rd_idx[atom.GetIdx()] = new_atom_node
 
     for bond in mol.GetBonds():
