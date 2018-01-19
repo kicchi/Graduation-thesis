@@ -1,4 +1,5 @@
-import numpy as np
+#import numpy as np
+import cupy as np
 from rdkit.Chem import MolFromSmiles
 from features import atom_features_from_ecfp, atom_features_from_fcfp, bond_features
 from chainer import Variable
