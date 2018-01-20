@@ -134,7 +134,7 @@ def main():
 
 		gpu_device = 0
 		cuda.get_device(gpu_device).use()
-		NNFP.to_gpu(get_device)
+		NNFP.to_gpu(gpu_device)
 		'''Learn'''
 		trained_NNFP, conv_training_curve, undo_norm = \
 			train_nn(NNFP, 
