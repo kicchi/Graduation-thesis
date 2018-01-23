@@ -14,19 +14,23 @@ from neuralfingerprint.util import rmse
 
 from autograd import grad
 
-task_params = {'target_name' : 'measured log solubility in mols per litre',
-               'data_file'   : 'delaney^.csv'}
-N_train = 800
+#task_params = {'target_name' : 'measured log solubility in mols per litre',
+#               'data_file'   : 'delaney.csv'}
+#task_params = {'target_name' : 'activity',
+#               'data_file'   : 'malaria.csv'}
+task_params = {'target_name' : 'PCE',
+               'data_file'   : 'cep.csv'}
+N_train = 700
 N_val   = 20
-N_test  = 20
+N_test  = 100
 
 model_params = dict(fp_length=50,    # Usually neural fps need far fewer dimensions than morgan.
                     fp_depth=4,      # The depth of the network equals the fingerprint radius.
                     conv_width=20,   # Only the neural fps need this parameter.
                     h1_size=100,     # Size of hidden layer of network on top of fps.
                     L2_reg=np.exp(-2))
-train_params = dict(num_iters=100,
-                    batch_size=100,
+train_params = dict(num_iters=2000,
+                    batch_size=200,
                     init_scale=np.exp(-4),
                     step_size=np.exp(-6))
 
@@ -115,11 +119,11 @@ def main():
     print "Task params", task_params
     print
     print "Starting Morgan fingerprint experiment..."
-    test_loss_morgan = run_morgan_experiment()
+    #test_loss_morgan = run_morgan_experiment()
     print "Starting neural fingerprint experiment..."
     test_loss_neural = run_conv_experiment()
     print
-    print "Morgan test RMSE:", test_loss_morgan, "Neural test RMSE:", test_loss_neural
+    print '''"Morgan test RMSE:", test_loss_morgan,''' "Neural test RMSE:", test_loss_neural
 
 if __name__ == '__main__':
     main()
