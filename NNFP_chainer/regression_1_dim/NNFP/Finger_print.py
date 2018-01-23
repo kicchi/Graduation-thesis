@@ -27,16 +27,6 @@ def array_rep_from_smiles(smiles):
                 'atom_list'     : molgraph.neighbor_list('molecule', 'atom'), # List of lists.
                 'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
 				
-
-    #print "atom_features", len(arrayrep['atom_features']),len(arrayrep['atom_features'][0])
-    #print arrayrep['atom_features']
-    #print "bond_features", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['bond_features']
-    #print "atom_list", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['atom_list']
-    #print "rdkit_ix", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['rdkit_ix']
-    #import pdb;pdb.set_trace()
     for degree in degrees:
         arrayrep[('atom_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'atom'), dtype=int)
@@ -47,7 +37,6 @@ def array_rep_from_smiles(smiles):
 
 def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights_func):
 	activations_by_degree = np.empty((0,20), dtype=np.float32)
-	#activations_by_degree = np.empty((0,1), dtype=np.float32)
 	for degree in degrees:
 		get_weights = eval(get_weights_func(degree))
 		atom_neighbors_list = array_rep[('atom_neighbors', degree)]
@@ -99,7 +88,6 @@ def build_weights(self, model_params):
 		for degree in degrees:
 		   	name = weights_name(layer, degree)
 			setattr(self, name, L.Linear(N_prev + num_bond_features(), N_cur,initialW=initializer))
-			#setattr(self, name, L.Linear(N_prev + 1, N_cur,initialW=initializer))
 
 class FP(Chain):
 	def __init__(self, model_params):

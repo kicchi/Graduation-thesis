@@ -16,11 +16,15 @@ from NNFP import Deep_neural_network
 from NNFP import Finger_print
 
 
-task_params = {'target_name' : 'measured log solubility in mols per litre',
-				'data_file'  : 'delaney.csv'}
+#task_params = {'target_name' : 'measured log solubility in mols per litre',
+#				'data_file'  : 'delaney.csv'}
+task_params = {'target_name' : 'PCE',
+				'data_file'  : 'cep.csv'}
+#task_params = {'target_name' : 'activity',
+#				'data_file'  : 'malaria.csv'}
 
 N_train = 700
-N_val   = 1
+N_val   = 20
 N_test  = 100
 
 model_params = dict(fp_length = 50,      
@@ -68,9 +72,9 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	optimizer.setup(model)
 	optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))	
 	
-	num_epoch = 100
+	num_epoch = 1000
 	num_data = len(train_smiles)
-	batch_size = 50
+	batch_size = 200
 	x = train_smiles
 	y = train_targets
 	sff_idx = npr.permutation(num_data)
