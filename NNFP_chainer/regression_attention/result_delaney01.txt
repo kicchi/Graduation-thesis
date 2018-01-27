@@ -44,3 +44,9 @@ real	290m54.402s
 user	319m1.436s
 sys		209m57.246s
 
+
+'Neural test RMSE', 0.8963024810897126
+
+ecfp 0.433 ~ 0.439
+fcfp 0.560 ~ 0.566
+

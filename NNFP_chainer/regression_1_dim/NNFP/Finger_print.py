@@ -118,9 +118,6 @@ class FP(Chain):
 
 			atom_features = bool_to_float32(atom_features)
 			bond_features = bool_to_float32(bond_features)
-			#print (atom_features[0])
-			#atom_features = bool_to_float32_one_dim(atom_features)
-			#bond_features = bool_to_float32_one_dim(bond_features)
 
 			all_layer_fps = []
 			atom_activations = []

@@ -16,12 +16,12 @@ from NNFP import Deep_neural_network
 from NNFP import Finger_print
 
 
-task_params = {'target_name' : 'measured log solubility in mols per litre',
-				'data_file'  : 'delaney.csv'}
+#task_params = {'target_name' : 'measured log solubility in mols per litre',
+#				'data_file'  : 'delaney.csv'}
 #task_params = {'target_name' : 'PCE',
 #				'data_file'  : 'cep.csv'}
-#task_params = {'target_name' : 'activity',
-#				'data_file'  : 'malaria.csv'}
+task_params = {'target_name' : 'activity',
+				'data_file'  : 'malaria.csv'}
 
 N_train = 700
 N_val   = 20
@@ -104,6 +104,7 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	return model, training_curve, undo_norm
 
 def main():
+	print "File name", task_params['data_file']
 	print "Loading data..."
 	traindata, valdata, testdata = load_data(
 		task_params['data_file'], (N_train, N_val, N_test),

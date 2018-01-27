@@ -107,3 +107,6 @@ real	163m53.224s
 user	141m31.296s
 sys	59m59.265s
 
+Neural test RMSE 2.25767606435
+Neural test RMSE 2.245920085
+

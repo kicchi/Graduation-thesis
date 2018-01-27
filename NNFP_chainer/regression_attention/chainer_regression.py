@@ -16,10 +16,10 @@ from NNFP import Deep_neural_network
 from NNFP import Finger_print
 
 
-task_params = {'target_name' : 'measured log solubility in mols per litre',
-				'data_file'  : 'delaney.csv'}
-#task_params = {'target_name' : 'PCE',
-#				'data_file'  : 'cep.csv'}
+#task_params = {'target_name' : 'measured log solubility in mols per litre',
+#				'data_file'  : 'delaney.csv'}
+task_params = {'target_name' : 'PCE',
+				'data_file'  : 'cep.csv'}
 #task_params = {'target_name' : 'activity',
 #				'data_file'  : 'malaria.csv'}
 
@@ -58,15 +58,22 @@ class Main(Chain):
 		x = Variable(x)
 		ecfp = self.build_ecfp(x)
 		fcfp = self.build_fcfp(x)
-		ecfp_beta = self.ecfp_attension(ecfp)
-		fcfp_beta = self.ecfp_attension(fcfp)
+		ecfp_beta = F.sigmoid(self.ecfp_attension(ecfp))
+		fcfp_beta = F.sigmoid(self.ecfp_attension(fcfp))
 		
-		ecfp_alpha = ecfp_beta / (ecfp_beta + fcfp_beta)
-		fcfp_alpha = fcfp_beta / (ecfp_beta + fcfp_beta)
+		ecfp_alpha = F.exp(ecfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
+		fcfp_alpha = F.exp(fcfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
 		attension_ecfp = F.batch_matmul(ecfp, ecfp_alpha)
 		attension_fcfp = F.batch_matmul(fcfp, fcfp_alpha)
 
-		pred = self.dnn(attension_ecfp)
+		ecfp_ave = (sum(ecfp_alpha) / len(ecfp_alpha))
+		fcfp_ave = (sum(fcfp_alpha) / len(fcfp_alpha))
+		print ("ecfp ave") , ecfp_ave
+		print ("fcfp ave") , fcfp_ave
+		ecfp_std = F.batch_l2_norm_squared(ecfp_alpha - 1) **2 / len(ecfp_alpha)
+		print ecfp_std
+
+		#pred = self.dnn(attension_ecfp)
 		pred = self.dnn(attension_fcfp + attension_ecfp)
 		return pred
 
@@ -86,6 +93,7 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))	
 	
 	num_epoch = train_params['num_iters']
+
 	num_data = len(train_smiles)
 	batch_size = train_params['batch_size']
 	x = train_smiles
@@ -111,7 +119,9 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 			if validation_smiles is not None:
 				validation_preds = model.mse(validation_smiles, validation_raw_targets, undo_norm)
 				print("Validation RMSE", epoch, ":", math.sqrt((validation_preds._data[0])))
-		#print loss
+			#print ("ecfp alpha"), e
+			#print ("fcfp alpha"), f
+
 
 		
 	return model, training_curve, undo_norm

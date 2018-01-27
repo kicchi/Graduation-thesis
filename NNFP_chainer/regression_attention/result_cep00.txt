@@ -38,7 +38,6 @@
 ('Validation RMSE', 1800, ':', 2.821542403009819)
 ('Iteration', 1900, 'loss', 0.6943290055541916, 'train RMSE', 1.7813320475638388)
 ('Validation RMSE', 1900, ':', 2.8369182645730495)
-('Neural test RMSE', 1.4922801683021885)
 
 real	400m3.322s
 user	465m29.859s
@@ -46,3 +45,14 @@ sys	231m57.593s
 
 epoch 2000
 batch_size 200
+
+('Neural test RMSE', 1.4922801683021885)
+ecfp alpha 0.892 ~ 0.899
+fcfp alpha 0.101 ~ 0.108
+
+('Neural test RMSE', 1.5875539575252866)
+ecfp alpha 0.492 ~ 0.497
+fcfp alpha 0.503 ~ 0.508
+
+('Neural test RMSE', 1.4413620856737637) softmax.ver
+

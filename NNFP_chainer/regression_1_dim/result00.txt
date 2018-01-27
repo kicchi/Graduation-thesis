@@ -104,3 +104,7 @@ Neural test RMSE 1.2367729845
 real	56m5.759s
 user	66m20.677s
 sys	66m49.306s
+
+Neural test RMSE 1.21992074537
+Neural test RMSE 1.225
+
