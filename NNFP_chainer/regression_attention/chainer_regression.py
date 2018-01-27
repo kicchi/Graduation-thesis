@@ -58,20 +58,41 @@ class Main(Chain):
 		x = Variable(x)
 		ecfp = self.build_ecfp(x)
 		fcfp = self.build_fcfp(x)
-		ecfp_beta = F.sigmoid(self.ecfp_attension(ecfp))
-		fcfp_beta = F.sigmoid(self.ecfp_attension(fcfp))
+		ecfp_beta = (self.ecfp_attension(ecfp))
+		fcfp_beta = (self.ecfp_attension(fcfp))
 		
+		print ("ecfp beta") , ecfp_beta
+		print ("fcfp beta") , fcfp_beta
+		ecfp_ave = (sum(ecfp_beta) / len(ecfp_beta))
+		fcfp_ave = (sum(fcfp_beta) / len(fcfp_beta))
+		print ("ecfp beta ave") , ecfp_ave
+		print ("fcfp beta ave") , fcfp_ave
+		ecfp_var = sum((F.batch_l2_norm_squared(ecfp_beta - ecfp_ave._data[0]))**2) / len(ecfp_beta)
+		fcfp_var = sum((F.batch_l2_norm_squared(fcfp_beta - fcfp_ave._data[0]))**2) / len(fcfp_beta)
+		print ("ecfp beta var") , ecfp_var
+		print ("fcfp beta var") , fcfp_var
+
+
 		ecfp_alpha = F.exp(ecfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
 		fcfp_alpha = F.exp(fcfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
+
+		print ("ecfp alpha") , ecfp_alpha
+		print ("fcfp alpha") , fcfp_alpha
+		ecfp_ave = (sum(ecfp_alpha) / len(ecfp_alpha))
+		fcfp_ave = (sum(fcfp_alpha) / len(fcfp_alpha))
+		print ("ecfp alpha ave") , ecfp_ave
+		print ("fcfp alpha ave") , fcfp_ave
+		ecfp_var = sum((F.batch_l2_norm_squared(ecfp_alpha - ecfp_ave._data[0]))**2) / len(ecfp_alpha)
+		fcfp_var = sum((F.batch_l2_norm_squared(fcfp_alpha - fcfp_ave._data[0]))**2) / len(fcfp_alpha)
+		print ("ecfp alpha var") , ecfp_var
+		print ("fcfp alpha var") , fcfp_var
+
 		attension_ecfp = F.batch_matmul(ecfp, ecfp_alpha)
 		attension_fcfp = F.batch_matmul(fcfp, fcfp_alpha)
 
-		ecfp_ave = (sum(ecfp_alpha) / len(ecfp_alpha))
-		fcfp_ave = (sum(fcfp_alpha) / len(fcfp_alpha))
-		print ("ecfp ave") , ecfp_ave
-		print ("fcfp ave") , fcfp_ave
-		ecfp_std = F.batch_l2_norm_squared(ecfp_alpha - 1) **2 / len(ecfp_alpha)
-		print ecfp_std
+		#print ("fcfp ave") , fcfp_ave
+		#ecfp_std = (F.batch_l2_norm_squared(ecfp_alpha - ecfp_ave._data[0]))**2 / len(ecfp_alpha)
+		#print ecfp_std
 
 		#pred = self.dnn(attension_ecfp)
 		pred = self.dnn(attension_fcfp + attension_ecfp)
