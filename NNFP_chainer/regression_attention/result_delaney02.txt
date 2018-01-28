@@ -1,0 +1,15 @@
+ecfp beta ave variable([ 3.14566731])
+fcfp beta ave variable([ 1.00336111])
+ecfp beta var variable(26.08957862854004)
+fcfp beta var variable(2.5022897720336914)
+
+ecfp alpha ave variable([ 0.81751895])
+fcfp alpha ave variable([ 0.18248098])
+ecfp alpha var variable(0.0008550180937163532)
+fcfp alpha var variable(0.0008550183847546577)
+('Neural test RMSE', 0.8643763918806828)
+
+real	275m37.065s
+user	319m26.447s
+sys		240m51.290s
+
