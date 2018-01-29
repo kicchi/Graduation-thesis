@@ -18,10 +18,10 @@ from NNFP import Finger_print
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
 #				'data_file'  : 'delaney.csv'}
-task_params = {'target_name' : 'PCE',
-				'data_file'  : 'cep.csv'}
-#task_params = {'target_name' : 'activity',
-#				'data_file'  : 'malaria.csv'}
+#task_params = {'target_name' : 'PCE',
+#				'data_file'  : 'cep.csv'}
+task_params = {'target_name' : 'activity',
+				'data_file'  : 'malaria.csv'}
 
 N_train = 700
 N_val   = 20
@@ -73,8 +73,8 @@ class Main(Chain):
 		print ("fcfp beta var") , fcfp_var
 
 
-		ecfp_alpha = F.exp(ecfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
-		fcfp_alpha = F.exp(fcfp_beta) / F.exp(ecfp_beta) + F.exp(fcfp_beta)
+		ecfp_alpha = F.exp(ecfp_beta) / (F.exp(ecfp_beta) + F.exp(fcfp_beta))
+		fcfp_alpha = F.exp(fcfp_beta) / (F.exp(ecfp_beta) + F.exp(fcfp_beta))
 
 		print ("ecfp alpha") , ecfp_alpha
 		print ("fcfp alpha") , fcfp_alpha
@@ -148,7 +148,7 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	return model, training_curve, undo_norm
 
 def main():
-	print("Loading data...")
+	print("Loading "), (task_params['data_file'])
 	traindata, valdata, testdata = load_data(
 		task_params['data_file'], (N_train, N_val, N_test),
 		input_name = 'smiles', target_name = task_params['target_name'])
@@ -177,6 +177,7 @@ def main():
 
 	print("Starting neural fingerprint experiment...")
 	test_loss_neural, conv_training_curve = run_conv_experiment()
+	print (conv_training_curve)
 	print("Neural test RMSE", test_loss_neural)
 	#result_plot(conv_training_curve, train_params)
 
