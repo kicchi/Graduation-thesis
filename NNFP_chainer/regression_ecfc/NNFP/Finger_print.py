@@ -169,7 +169,6 @@ class FCFP(Chain): #fp_switch: fcfp is True
 
 		def output_layer_fun_and_atom_activations(self, smiles):
 			array_rep = array_rep_from_smiles(tuple(smiles), True)
-			#print array_rep
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 

@@ -18,14 +18,14 @@ from NNFP import Finger_print
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
 #				'data_file'  : 'delaney.csv'}
-task_params = {'target_name' : 'PCE',
-				'data_file'  : 'cep.csv'}
-#task_params = {'target_name' : 'activity',
-#				'data_file'  : 'malaria.csv'}
+#task_params = {'target_name' : 'PCE',
+#				'data_file'  : 'cep.csv'}
+task_params = {'target_name' : 'activity',
+				'data_file'  : 'malaria.csv'}
 
-N_train = 7
-N_val   = 2
-N_test  = 1
+N_train = 700
+N_val   = 20
+N_test  = 100
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
@@ -33,8 +33,8 @@ model_params = dict(fp_length = 50,
 					h1_size = 100,      #最上位の中間層のサイズ
 					L2_reg = np.exp(-2))
 
-train_params = dict(num_iters = 20,
-					batch_size = 2,
+train_params = dict(num_iters = 2000,
+					batch_size = 200,
 					init_scale = np.exp(-4),
 					step_size = np.exp(-6))
 
