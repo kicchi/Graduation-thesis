@@ -1,3 +1,4 @@
+#coding : utf-8
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -16,6 +17,46 @@ def atom_features_from_ecfp(atom):
                     one_of_k_encoding_unk(atom.GetImplicitValence(), [0, 1, 2, 3, 4, 5]) +
                     [atom.GetIsAromatic()]
 					)
+
+
+def atom_get(x, allowable_set):
+	"""Maps inputs not in the allowable set to the last element."""
+	if x not in allowable_set:
+		return -1
+	
+	
+	for i in range(len(allowable_set)):
+		if allowable_set[i] == x: 
+			return i
+
+def get_degree(x):
+	return int(x)
+
+def get_totalnumHs(x):
+	return int(x)
+
+def get_implicitValamce(x):
+	return int(x)
+
+def get_isaromatic(x):
+	return 1 if x else 0
+
+
+'''
+
+def atom_features_from_ecfp(atom):
+    return   np.array([atom_get(atom.GetSymbol(),
+                                      ['C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg', 'Na',
+                                       'Ca', 'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl', 'Yb',
+                                       'Sb', 'Sn', 'Ag', 'Pd', 'Co', 'Se', 'Ti', 'Zn', 'H',    # H?
+                                       'Li', 'Ge', 'Cu', 'Au', 'Ni', 'Cd', 'In', 'Mn', 'Zr',
+                                       'Cr', 'Pt', 'Hg', 'Pb', 'Unknown']),
+                    get_degree(atom.GetDegree()),
+                    get_totalnumHs(atom.GetTotalNumHs()),
+                    get_implicitValamce(atom.GetImplicitValence()),
+                    get_isaromatic(atom.GetIsAromatic())]
+					)
+'''
 
 def atom_features_from_fcfp(mol):
 	com = AllChem.RemoveHs(mol) 
