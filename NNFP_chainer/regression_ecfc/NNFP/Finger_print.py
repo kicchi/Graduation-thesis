@@ -86,6 +86,8 @@ def build_weights(self, model_params, fp_switch):
 			name = weights_name(layer, degree)
 			setattr(self, name, L.Linear(N_prev + num_bond_features(), N_cur,initialW=initializer))
 
+	'''feature sellection'''
+
 class ECFC(Chain): #fp_switch: ecfp is False
 	def __init__(self, model_params):
 		super(ECFC, self).__init__()
@@ -115,6 +117,7 @@ class ECFC(Chain): #fp_switch: ecfp is False
 
 			atom_features = bool_to_float32(atom_features)
 			bond_features = bool_to_float32(bond_features)
+
 
 			all_layer_fps = []
 			atom_activations = []
