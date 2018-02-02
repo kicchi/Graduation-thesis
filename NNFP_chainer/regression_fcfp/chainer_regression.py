@@ -139,6 +139,7 @@ def main():
 
 	print("Starting neural fingerprint experiment...")
 	test_loss_neural, conv_training_curve = run_conv_experiment()
+	print ("data file") , task_params['data_file']
 	print ("training_curve")
 	print (conv_training_curve)
 	print("Neural test RMSE", test_loss_neural)

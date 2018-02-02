@@ -18,10 +18,10 @@ from NNFP import Finger_print
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
 #				'data_file'  : 'delaney.csv'}
-task_params = {'target_name' : 'PCE',
-				'data_file'  : 'cep.csv'}
-#task_params = {'target_name' : 'activity',
-#				'data_file'  : 'malaria.csv'}
+#task_params = {'target_name' : 'PCE',
+#				'data_file'  : 'cep.csv'}
+task_params = {'target_name' : 'activity',
+				'data_file'  : 'malaria.csv'}
 
 N_train = 700
 N_val   = 20
@@ -137,6 +137,9 @@ def main():
 	print("Starting neural fingerprint experiment...")
 	test_loss_neural, conv_training_curve = run_conv_experiment()
 	print("Neural test RMSE", test_loss_neural)
+
+	print (conv_training_curve)
+	print ("data file is "), (task_params['data_file'])
 	#result_plot(conv_training_curve, train_params)
 
 if __name__ == '__main__':

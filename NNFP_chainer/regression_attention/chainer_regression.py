@@ -17,15 +17,15 @@ from NNFP import Finger_print
 
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
-#				'data_file'  : 'delaney.csv'}
+				#'data_file'  : 'delaney.csv'}
 #task_params = {'target_name' : 'PCE',
 #				'data_file'  : 'cep.csv'}
 task_params = {'target_name' : 'activity',
 				'data_file'  : 'malaria.csv'}
 
-N_train = 700
-N_val   = 20
-N_test  = 100
+N_train = 7000
+N_val   = 200
+N_test  = 1000
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
@@ -177,6 +177,8 @@ def main():
 
 	print("Starting neural fingerprint experiment...")
 	test_loss_neural, conv_training_curve = run_conv_experiment()
+	print ("data file"), task_params['data_file']
+
 	print (conv_training_curve)
 	print("Neural test RMSE", test_loss_neural)
 	#result_plot(conv_training_curve, train_params)
