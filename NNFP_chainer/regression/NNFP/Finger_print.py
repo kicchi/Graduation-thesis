@@ -10,6 +10,8 @@ from collections import OrderedDict
 from features import num_atom_features, num_bond_features
 from mol_graph import graph_from_smiles_tuple, degrees
 
+from time import time
+
 def fast_array_from_list(xs):
     fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
     for x in xs:
@@ -28,15 +30,6 @@ def array_rep_from_smiles(smiles):
                 'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
 				
 
-    #print "atom_features", len(arrayrep['atom_features']),len(arrayrep['atom_features'][0])
-    #print arrayrep['atom_features']
-    #print "bond_features", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['bond_features']
-    #print "atom_list", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['atom_list']
-    #print "rdkit_ix", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
-    #print arrayrep['rdkit_ix']
-    #import pdb;pdb.set_trace()
     for degree in degrees:
         arrayrep[('atom_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'atom'), dtype=int)
@@ -102,7 +95,8 @@ class FP(Chain):
 			build_weights(self, model_params)
 
 	def __call__(self, smiles):
-		array_rep = array_rep_from_smiles(tuple(smiles)) #rdkitで計算。smiles to data
+		#t = time()
+		#array_rep = array_rep_from_smiles(tuple(smiles)) #rdkitで計算。smiles to data
 	
 		def update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False):
 			def get_weights_func(degree): #layer と degree からパラメータを選択する。
@@ -115,15 +109,19 @@ class FP(Chain):
 			total_activations = neighbor_activations + self_activations
 			if normalize: #FPでbatch normalizationいらない
 				total_activations = F.batch_normalization(total_activations)
+			#print "update layer ", time() - t
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
+			#print "start array rep from smiles ", time() - t
 			array_rep = array_rep_from_smiles(tuple(smiles))
+			#print "array rep from smiles ", time() - t
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 
 			atom_features = bool_to_float32(atom_features)
 			bond_features = bool_to_float32(bond_features)
+			#print "change type ", time() - t
 
 			all_layer_fps = []
 			atom_activations = []
@@ -142,6 +140,7 @@ class FP(Chain):
 				atom_features = atom_features._data[0]
 
 			write_to_fingerprint(self, atom_features, num_layers)
+			#print "output layer fun and atom act ", time() - t
 			return sum(all_layer_fps), atom_activations, array_rep
 	
 		def output_layer_fun(self, smiles):
@@ -153,5 +152,6 @@ class FP(Chain):
 			return atom_activations, array_rep
 	
 		conv_fp_func = output_layer_fun
+		#print "end in FP ",time() - t
 		return (conv_fp_func(self, smiles))
 

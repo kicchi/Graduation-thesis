@@ -13,19 +13,22 @@ from neuralfingerprint import build_batched_grad
 from neuralfingerprint.util import rmse
 
 from autograd import grad
+from time import time
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
 #               'data_file'   : 'delaney.csv'}
 #task_params = {'target_name' : 'activity',
 #               'data_file'   : 'malaria.csv'}
-task_params = {'target_name' : 'PCE',
-               'data_file'   : 'cep.csv'}
-N_train = 700
-N_val   = 20
+#task_params = {'target_name' : 'PCE',
+#               'data_file'   : 'cep.csv'}
+task_params = {'target_name' : 'target',
+               'data_file'   : 'tox.csv'}
+N_train = 8000
+N_val   = 100
 N_test  = 100
 
 model_params = dict(fp_length=50,    # Usually neural fps need far fewer dimensions than morgan.
-                    fp_depth=4,      # The depth of the network equals the fingerprint radius.
+                    fp_depth=5,      # The depth of the network equals the fingerprint radius.
                     conv_width=20,   # Only the neural fps need this parameter.
                     h1_size=100,     # Size of hidden layer of network on top of fps.
                     L2_reg=np.exp(-2))

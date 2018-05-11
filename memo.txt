@@ -1,0 +1,15 @@
+chainer-chemistryのサンプルコード（model:NFP dataset:tox21）
+epoch : 10
+iters : 400
+time : real
+
+train data size : 11757
+cpu:10m
+gpu:8m
+
+train data size : 9000
+論文コード
+autograd: 24m
+
+結論
+GPUの方が早い

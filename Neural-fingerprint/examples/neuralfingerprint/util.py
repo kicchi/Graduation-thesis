@@ -134,6 +134,7 @@ def build_batched_grad(grad, batch_size, inputs, targets):
     """Grad has signature(weights, inputs, targets)."""
     def batched_grad(weights, i):
         cur_idxs = get_ith_minibatch_ixs(i, len(targets), batch_size)
+        print ("index : ", cur_idxs)
         return grad(weights, inputs[cur_idxs], targets[cur_idxs])
     return batched_grad
 

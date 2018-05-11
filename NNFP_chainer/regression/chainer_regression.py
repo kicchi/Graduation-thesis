@@ -8,6 +8,8 @@ from chainer import cuda, Function, Variable, optimizers
 from chainer import Link, Chain
 import chainer.functions as F
 import chainer.links as L
+import cProfile
+import re
 
 from NNFP import load_data 
 from NNFP import result_plot 
@@ -15,17 +17,18 @@ from NNFP import normalize_array
 from NNFP import Deep_neural_network
 from NNFP import Finger_print
 
+from time import time
 
 #task_params = {'target_name' : 'measured log solubility in mols per litre',
 #				'data_file'  : 'delaney.csv'}
-#task_params = {'target_name' : 'PCE',
-#				'data_file'  : 'cep.csv'}
-task_params = {'target_name' : 'activity',
-				'data_file'  : 'malaria.csv'}
+task_params = {'target_name' : 'PCE',
+				'data_file'  : 'cep.csv'}
+#task_params = {'target_name' : 'activity',
+#				'data_file'  : 'malaria.csv'}
 
-N_train = 700
+N_train = 100
 N_val   = 20
-N_test  = 100
+N_test  = 90
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
@@ -53,7 +56,9 @@ class Main(Chain):
 
 	def prediction(self, x):
 		x = Variable(x)
+		t = time()
 		finger_print = self.fp(x)
+		print "Fp time ", time() - t
 		pred = self.dnn(finger_print)
 		return pred
 
@@ -70,11 +75,11 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	training_curve = []
 	optimizer = optimizers.Adam()
 	optimizer.setup(model)
-	optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))	
+	optimizer.add_hook(chainer.optimizer.WeightDecay(np.exp(-6)))	
 	
 	num_epoch = 2000
 	num_data = len(train_smiles)
-	batch_size = 200
+	batch_size = 2000
 	x = train_smiles
 	y = train_targets
 	sff_idx = npr.permutation(num_data)
@@ -136,6 +141,7 @@ def main():
 	test_loss_neural, conv_training_curve = run_conv_experiment()
 	print 
 	print  "Neural test RMSE", test_loss_neural
+	cProfile.run('re.compile("foo|bar")')
 	#result_plot(conv_training_curve, train_params)
 
 if __name__ == '__main__':

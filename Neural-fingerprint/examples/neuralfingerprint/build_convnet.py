@@ -72,6 +72,7 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
     def output_layer_fun_and_atom_activations(weights, smiles):
         """Computes layer-wise convolution, and returns a fixed-size output."""
 
+
         array_rep = array_rep_from_smiles(tuple(smiles))
         atom_features = array_rep['atom_features']
         bond_features = array_rep['bond_features']
