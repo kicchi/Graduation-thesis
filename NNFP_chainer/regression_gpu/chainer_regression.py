@@ -1,8 +1,9 @@
 #coding: utf-8
 import math
-import numpy 
+import time
+#import numpy as np
 import numpy.random as npr
-import cupy as np #GPUを使うためのnumpy
+import cupy as cp #GPUを使うためのnumpy
 import chainer 
 from chainer import cuda, Function, Variable, optimizers
 from chainer import Link, Chain
@@ -19,20 +20,21 @@ from NNFP import Finger_print
 task_params = {'target_name' : 'measured log solubility in mols per litre',
 				'data_file'  : 'delaney.csv'}
 
-N_train = 700
-N_val   = 20
-N_test  = 100
+N_train = 70
+N_val   = 1
+N_test  = 10
+
 
 model_params = dict(fp_length = 50,      
 					fp_depth = 4,       #NNの層と、FPの半径は同じ
 					conv_width = 20,    #必要なパラメータはこれだけ（？）
 					h1_size = 100,      #最上位の中間層のサイズ
-					L2_reg = np.exp(-2))
+					L2_reg = cp.exp(-2))
 
 train_params = dict(num_iters = 100,
 					batch_size = 50,
-					init_scale = np.exp(-4),
-					step_size = np.exp(-6))
+					init_scale = cp.exp(-4),
+					step_size = cp.exp(-6))
 
 	
 class Main(Chain):
@@ -43,18 +45,20 @@ class Main(Chain):
 		)
 	
 	def __call__(self, x, y):
-		y = Variable(np.array(y, dtype=np.float32))
+		t = time.time()
+		y = Variable(cp.array(y, dtype=cp.float32))
+		print("variable : ", time.time() - t)
 		pred = self.prediction(x)
 		return F.mean_squared_error(pred, y)
 
 	def prediction(self, x):
-		x = Variable(x)
+		x = Variable(cuda.to_cpu(x))
 		finger_print = self.fp(x)
 		pred = self.dnn(finger_print)
 		return pred
 
 	def mse(self, x, y, undo_norm):
-		y = Variable(np.array(y, dtype=np.float32))
+		y = Variable(cp.array(y, dtype=cp.float32))
 		pred = undo_norm(self.prediction(x))
 		return F.mean_squared_error(pred, y)
 	
@@ -74,25 +78,33 @@ def train_nn(model, train_smiles, train_raw_targets, seed=0,
 	x = train_smiles
 	y = train_targets
 	sff_idx = npr.permutation(num_data)
+	TIME = time.time()
 	for epoch in range(num_epoch):
+		epoch_time = time.time()
 		for idx in range(0,num_data, batch_size):
 			batched_x = x[sff_idx[idx:idx+batch_size
 				if idx + batch_size < num_data else num_data]]
 			batched_y = y[sff_idx[idx:idx+batch_size
 				if idx + batch_size < num_data else num_data]]
+			update_time	 = time.time()
 			model.zerograds()
 			loss = model(batched_x, batched_y)
 			loss.backward()
 			optimizer.update()
+			print("UPDATE TIME : ",  time.time() - update_time)
 		#print "epoch ", epoch, "loss", loss._data[0]
 		if epoch % 10 == 0:
+			print_time = time.time()
 			train_preds = model.mse(train_smiles, train_raw_targets, undo_norm)
 			cur_loss = loss._data[0]
 			training_curve.append(cur_loss)
-			print("Iteration", epoch, "loss", math.sqrt(cur_loss), "train RMSE", math.sqrt((train_preds._data[0])))
+			print("PRINT TIME : ",  time.time() - print_time)
+			print("Iteration", epoch, "loss", math.sqrt(cur_loss), \
+				"train RMSE", math.sqrt((train_preds._data[0])))
 			if validation_smiles is not None:
 				validation_preds = model.mse(validation_smiles, validation_raw_targets, undo_norm)
 				print("Validation RMSE", epoch, ":", math.sqrt((validation_preds._data[0])))
+		print("1 EPOCH TIME : ", time.time() - epoch_time)
 		#print loss
 
 		
@@ -106,12 +118,12 @@ def main():
 	x_trains, y_trains = traindata
 	x_vals, y_vals = valdata
 	x_tests, y_tests = testdata
-	x_trains = np.reshape(x_trains, (N_train, 1))
-	y_trains = np.reshape(y_trains, (N_train, 1))
-	x_vals = np.reshape(x_vals, (N_val, 1))
-	y_vals = np.reshape(y_vals, (N_val, 1))
-	x_tests = np.reshape(x_tests, (N_test, 1))
-	y_tests = np.reshape(y_tests, (N_test, 1)).astype(np.float32)
+	x_trains = cp.reshape(x_trains, (N_train, 1))
+	y_trains = cp.reshape(y_trains, (N_train, 1)).astype(cp.float32)
+	x_vals = cp.reshape(x_vals, (N_val, 1))
+	y_vals = cp.reshape(y_vals, (N_val, 1)).astype(cp.float32)
+	x_tests = cp.reshape(x_tests, (N_test, 1))
+	y_tests = cp.reshape(y_tests, (N_test, 1)).astype(cp.float32)
 
 	def run_conv_experiment():
 		'''Initialize model'''
@@ -121,7 +133,8 @@ def main():
 
 		gpu_device = 0
 		cuda.get_device(gpu_device).use()
-		NNFP.to_gpu(get_device)
+		NNFP.to_gpu(gpu_device)
+		#xp = cuda.cupy
 		'''Learn'''
 		trained_NNFP, conv_training_curve, undo_norm = \
 			train_nn(NNFP, 

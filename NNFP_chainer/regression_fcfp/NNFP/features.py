@@ -1,7 +1,7 @@
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from util import one_of_k_encoding, one_of_k_encoding_unk
+from .util import one_of_k_encoding, one_of_k_encoding_unk
 
 def atom_features_from_ecfp(atom):
     #print atom
@@ -21,9 +21,9 @@ def atom_features_from_fcfp(mol):
 	com = AllChem.RemoveHs(mol) 
 	gl = AllChem.GetFeatureInvariants(com)
 	def to_bin(x):
-		ff = (map(int, list(format(x, 'b').zfill(6)))) #FCFP has 6 features
+		ff = (list(map(int, list(format(x, 'b').zfill(6))))) #FCFP has 6 features
 		return ff
-	gl = map(to_bin, gl)
+	gl = list(map(to_bin, gl))
 	return np.array(gl)
 
 def bond_features(bond):

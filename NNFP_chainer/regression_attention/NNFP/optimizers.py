@@ -1,11 +1,12 @@
 import numpy as np
+#import cupy as np
 from scipy.optimize import minimize
 
 def sgd(grad, x, callback=None, num_iters=200, step_size=0.1, mass=0.9):
     """Stochastic gradient descent with momentum.
     grad() has signature grad(x, i), where i is the iteration."""
     velocity = np.zeros(len(x))
-    for i in xrange(num_iters):
+    for i in range(num_iters):
         g = grad(x, i)
         if callback: callback(x, i)
         velocity = mass * velocity - (1.0 - mass) * g
@@ -16,7 +17,7 @@ def rms_prop(grad, x, callback=None, num_iters=100, step_size=0.1, gamma=0.9,
              eps = 10**-8):
     """Root mean squared prop: See Adagrad paper for details."""
     avg_sq_grad = np.ones(len(x)) # Is this really a sensible initialization?
-    for i in xrange(num_iters):
+    for i in range(num_iters):
         g = grad(x, i)
         if callback: callback(x, i)
         avg_sq_grad = avg_sq_grad * gamma + g**2 * (1 - gamma)
@@ -38,7 +39,7 @@ def adam(grad, x, callback=None, num_iters=100,
         vhat = v / (1 - b2**(i + 1))
         x -= step_size*mhat/(np.sqrt(vhat) + eps)
         #print x.shape
-    print "adam return ",  len(x)
+    print("adam return ",  len(x))
     return x
 
 def bfgs(obj_and_grad, x, callback=None, num_iters=100):

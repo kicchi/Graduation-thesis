@@ -1,4 +1,5 @@
 import numpy 
+#import numpy as np
 import cupy as np
 from rdkit.Chem import MolFromSmiles
 from .features import atom_features, bond_features
@@ -80,7 +81,7 @@ def graph_from_smiles(smiles):
     if type(check) is not type(smiles):
         str_smiles = smiles._data[0][0]
     else:
-		str_smiles = smiles[0]
+        str_smiles = smiles[0]
     mol = MolFromSmiles(str_smiles)
     if not mol:
         raise ValueError("Could not parse SMILES string:", str_smiles)

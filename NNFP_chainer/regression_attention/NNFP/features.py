@@ -1,7 +1,8 @@
-import numpy as np
+import numpy as np 
+#import cupy as np 
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from util import one_of_k_encoding, one_of_k_encoding_unk
+from .util import one_of_k_encoding, one_of_k_encoding_unk
 
 def atom_features_from_ecfp(atom):
     #print atom
@@ -21,25 +22,10 @@ def atom_features_from_fcfp(mol):
 	com = AllChem.RemoveHs(mol) 
 	gl = AllChem.GetFeatureInvariants(com)
 	def to_bin(x):
-		ff = (map(int, list(format(x, 'b').zfill(6)))) #FCFP has 6 features
+		ff = (list(map(int, list(format(x, 'b').zfill(6))))) #FCFP has 6 features
 		return ff
-	gl = map(to_bin, gl)
+	gl = list(map(to_bin, gl))
 	return np.array(gl)
-
-def atom_features_from_3(atom):
-	return np.array(one_of_k_encoding_unk(atom.GetSymbol(),
-										['H', 'C', 'N', 'O', 'F', 'P', 'S',
-										 'Cl', 'Br', 'I', 'metal']) + 
-					#chiral R or S
-					[atom.GetImplicitValence()] + 
-					#partial charge?atom.ComputeGasteigerCharges()
-					one_of_k_encoding_unk(atom.IsInRingSize(),
-										[3, 4, 5, 6, 7, 8]) +
-					one_of_k_encoding_unk(atom.GetHybridization(),
-										['SP', 'SP2', 'SP3']) +
-					#Hydrogen bonding
-					[atom.GetIsAromatic()]
-					)
 
 def bond_features(bond):
     bt = bond.GetBondType()
@@ -49,11 +35,6 @@ def bond_features(bond):
                      bt == Chem.rdchem.BondType.AROMATIC,
                      bond.GetIsConjugated(),
                      bond.IsInRing()])
-
-#feature の追加したいけど、先に高速化
-def bond_features_2(bond):
-	bt = bond.GetBondType()
-	
 
 def num_atom_features_from_ecfp():
 	# Return length of feature vector using a very simple molecule.

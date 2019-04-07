@@ -23,7 +23,7 @@ def read_csv(filename, nrows, input_name, target_name):
         for row in it.islice(reader, nrows):
             data[0].append(row[input_name])
             data[1].append(float(row[target_name]))
-    return map(np.array, data)
+    return list(map(np.array, data))
 
 def smiles_from_SDF(filename, sizes):
 	smiles_list = np.empty((1,1))

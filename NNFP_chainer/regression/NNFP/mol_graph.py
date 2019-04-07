@@ -1,6 +1,8 @@
+import numpy 
 import numpy as np
+#import cupy as np
 from rdkit.Chem import MolFromSmiles
-from features import atom_features, bond_features
+from .features import atom_features, bond_features
 from chainer import Variable
 from chainer.variable import variable_str
 degrees = [0, 1, 2, 3, 4, 5]
@@ -35,7 +37,7 @@ class MolGraph(object):
 
     def feature_array(self, ntype):
         assert ntype in self.nodes
-        return np.array([node.features for node in self.nodes[ntype]])
+        return numpy.array([node.features for node in self.nodes[ntype]])
 
     def rdkit_ix_array(self):
         return np.array([node.rdkit_ix for node in self.nodes['atom']])
@@ -79,7 +81,7 @@ def graph_from_smiles(smiles):
     if type(check) is not type(smiles):
         str_smiles = smiles._data[0][0]
     else:
-		str_smiles = smiles[0]
+        str_smiles = smiles[0]
     mol = MolFromSmiles(str_smiles)
     if not mol:
         raise ValueError("Could not parse SMILES string:", str_smiles)

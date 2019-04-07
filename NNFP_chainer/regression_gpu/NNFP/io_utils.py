@@ -2,6 +2,7 @@
 import os
 import csv
 import numpy 
+#import numpy  as np
 import cupy as np
 import matplotlib.pyplot as plt
 import itertools as it

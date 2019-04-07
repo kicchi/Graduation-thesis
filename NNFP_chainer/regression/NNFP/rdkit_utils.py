@@ -1,5 +1,6 @@
 import rdkit.Chem as Chem
 from rdkit.Chem import AllChem
+#import cupy as np
 import numpy as np
 
 def smiles_to_fps(data, fp_length, fp_radius):

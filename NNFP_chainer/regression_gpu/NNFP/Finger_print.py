@@ -1,6 +1,6 @@
 #coding: utf-8
-import numpy 
-import cupy as np #GPUを使うためのnumpy
+import numpy as np
+import cupy as cp 
 import chainer 
 from chainer import cuda, Function, Variable, optimizers, initializers
 from chainer import Link, Chain
@@ -11,7 +11,7 @@ from .features import num_atom_features, num_bond_features
 from .mol_graph import graph_from_smiles_tuple, degrees
 
 def fast_array_from_list(xs):
-    fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
+    fast_array = Variable(cp.empty((0,len(xs[0])), dtype=cp.float32))
     for x in xs:
         fast_array = F.concat((fast_array, (F.expand_dims(x, axis=0))), axis=0)
     return fast_array
@@ -21,22 +21,24 @@ def sum_and_stack(features, idxs_list_of_lists):
 
 def array_rep_from_smiles(smiles):
     """Precompute everything we need from MolGraph so that we can free the memory asap."""
+    #print ("smiles size : ", (smiles))
     molgraph = graph_from_smiles_tuple(smiles)
     arrayrep = {'atom_features' : molgraph.feature_array('atom'),
                 'bond_features' : molgraph.feature_array('bond'),
                 'atom_list'     : molgraph.neighbor_list('molecule', 'atom'), # List of lists.
                 'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
-				
+
     for degree in degrees:
         arrayrep[('atom_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'atom'), dtype=int)
         arrayrep[('bond_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'bond'), dtype=int)
+    #print (arrayrep[('atom_neighbors', 1)])
     return arrayrep
 
 
 def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights_func):
-	activations_by_degree = np.empty((0,20), dtype=np.float32)
+	activations_by_degree = cp.empty((0,20), dtype=cp.float32)
 	for degree in degrees:
 		get_weights = eval(get_weights_func(degree))
 		atom_neighbors_list = array_rep[('atom_neighbors', degree)]
@@ -44,9 +46,9 @@ def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights
 		if len(atom_neighbors_list) > 0:
 			neighbor_features = [atom_features[atom_neighbors_list],
 								bond_features[bond_neighbors_list]]
-			stacked_neighbors = np.concatenate(neighbor_features, axis=2)
+			stacked_neighbors = cp.concatenate(neighbor_features, axis=2)
 			summed_neighbors = F.sum(stacked_neighbors,axis=1)
-  			activations = get_weights(summed_neighbors)
+			activations = get_weights(summed_neighbors)
 			activations_by_degree = F.concat((activations_by_degree, activations), axis=0)
 	return activations_by_degree
 
@@ -54,16 +56,17 @@ def weights_name(layer, degree):
     return "layer_" + str(layer) + "_degree_" + str(degree) + "_filter"
 
 def bool_to_float32(features):
-	return cuda.to_gpu(numpy.array(features).astype(numpy.float32))
+	return cp.array(((cp.array, features))).astype(cp.float32)
+	#return cuda.to_gpu(numpy.array(features).astype(numpy.float32))
 
 def bool_to_float32_one_dim(features):
-	vec = np.empty((0,1), dtype=np.float32)
+	vec = cp.empty((0,1), dtype=cp.float32)
 	for f in features:
 		new_idx = 0.0
 		for idx in range(len(f)):
 			if f[idx]:
 				new_idx += idx
-		vec = np.append(vec, np.array([[new_idx]], dtype=np.float32),axis=0)
+		vec = cp.append(vec, cp.array([[new_idx]], dtype=cp.float32),axis=0)
 	return vec
 
 
@@ -108,17 +111,22 @@ class FP(Chain):
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
-			array_rep = array_rep_from_smiles(tuple(smiles))
+			#array_rep = array_rep_from_smiles(tuple(smiles))
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 
-			atom_features = bool_to_float32(atom_features)
-			bond_features = bool_to_float32(bond_features)
+			
+			atom_features = cp.asarray(atom_features, dtype=cp.float32)
+			bond_features = cp.asarray(bond_features, dtype=cp.float32)
+			#atom_features = bool_to_float32(atom_features)
+			#bond_features = bool_to_float32(bond_features)
 
 			all_layer_fps = []
 			atom_activations = []
 			def write_to_fingerprint(self, atom_features, layer):
 				cur_out_weights = eval("self.layer_output_weights_" + str(layer))
+				#print((cur_out_weights.W))
+				#print(type(cur_out_weights.W))
 				atom_outputs = F.softmax(cur_out_weights(atom_features))
 				atom_activations.append(atom_outputs)
 				# Sum over all atoms within a moleclue:
@@ -128,6 +136,9 @@ class FP(Chain):
 			num_layers = self.model_params['fp_depth']
 			for layer in range(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
+				#print (len(atom_features))
+				#print (len(bond_features))
+				#import pdb;pdb.set_trace()
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]
 

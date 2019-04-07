@@ -1,4 +1,5 @@
 import numpy as np
+#import cupy as np
 
 import sys, signal, pickle
 from contextlib import contextmanager
@@ -18,14 +19,14 @@ def collect_test_losses(num_folds):
                 with open(fname) as f:
                     results[net_type].append(pickle.load(f))
             except IOError:
-                print "Couldn't find file {0}".format(fname)
+                print("Couldn't find file {0}".format(fname))
 
-    print "Results are:"
-    print results
-    print "Means:"
-    print {k : np.mean(v) for k, v in results.iteritems()}
-    print "Std errors:"
-    print {k : np.std(v) / np.sqrt(len(v) - 1) for k, v in results.iteritems()}
+    print("Results are:")
+    print(results)
+    print("Means:")
+    print({k : np.mean(v) for k, v in results.items()})
+    print("Std errors:")
+    print({k : np.std(v) / np.sqrt(len(v) - 1) for k, v in results.items()})
 
 def record_loss(loss, expt_ix, net_type):
     fname = "Final_test_loss_{0}_{1}.pkl.save".format(expt_ix, net_type)
@@ -37,15 +38,15 @@ def N_fold_split(N_folds, fold_ix, N_data):
     fold_size = N_data / N_folds
     test_fold_start = fold_size * fold_ix
     test_fold_end   = fold_size * (fold_ix + 1)
-    test_ixs  = range(test_fold_start, test_fold_end)
-    train_ixs = range(0, test_fold_start) + range(test_fold_end, N_data)
+    test_ixs  = list(range(test_fold_start, test_fold_end))
+    train_ixs = list(range(0, test_fold_start)) + list(range(test_fold_end, N_data))
     return train_ixs, test_ixs
 
 def rmse(X, Y):
     return np.sqrt(np.mean((X - Y)**2))
 
 def slicedict(d, ixs):
-    return {k : v[ixs] for k, v in d.iteritems()}
+    return {k : v[ixs] for k, v in d.items()}
 
 class memoize(object):
     def __init__(self, func):
@@ -73,11 +74,11 @@ def normalize_array(A):
 
 @contextmanager
 def tictoc():
-    print "--- Start clock ---"
+    print("--- Start clock ---")
     t1 = time()
     yield
     dt = time() - t1
-    print "--- Stop clock: %s seconds elapsed ---" % dt
+    print("--- Stop clock: %s seconds elapsed ---" % dt)
 
 class WeightsParser(object):
     """A kind of dictionary of weights shapes,
@@ -108,13 +109,13 @@ class WeightsParser(object):
 def one_of_k_encoding(x, allowable_set):
     if x not in allowable_set:
         raise Exception("input {0} not in allowable set{1}:".format(x, allowable_set))
-    return map(lambda s: x == s, allowable_set)
+    return [x == s for s in allowable_set]
 
 def one_of_k_encoding_unk(x, allowable_set):
     """Maps inputs not in the allowable set to the last element."""
     if x not in allowable_set:
         x = allowable_set[-1]
-    return map(lambda s: x == s, allowable_set)
+    return [x == s for s in allowable_set]
 
 def dropout(weights, fraction, random_state):
     """Randomly sets fraction of weights to zero, and increases the rest

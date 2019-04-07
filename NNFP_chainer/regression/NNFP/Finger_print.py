@@ -1,16 +1,15 @@
 #coding: utf-8
+import numpy 
 import numpy as np
-#import cupy as cp #GPUを使うためのnumpy
+#import cupy as np 
 import chainer 
 from chainer import cuda, Function, Variable, optimizers, initializers
 from chainer import Link, Chain
 import chainer.functions as F
 import chainer.links as L
 from collections import OrderedDict
-from features import num_atom_features, num_bond_features
-from mol_graph import graph_from_smiles_tuple, degrees
-
-from time import time
+from .features import num_atom_features, num_bond_features
+from .mol_graph import graph_from_smiles_tuple, degrees
 
 def fast_array_from_list(xs):
     fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
@@ -28,7 +27,6 @@ def array_rep_from_smiles(smiles):
                 'bond_features' : molgraph.feature_array('bond'),
                 'atom_list'     : molgraph.neighbor_list('molecule', 'atom'), # List of lists.
                 'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
-				
 
     for degree in degrees:
         arrayrep[('atom_neighbors', degree)] = \
@@ -49,7 +47,7 @@ def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights
 								bond_features[bond_neighbors_list]]
 			stacked_neighbors = np.concatenate(neighbor_features, axis=2)
 			summed_neighbors = F.sum(stacked_neighbors,axis=1)
-  			activations = get_weights(summed_neighbors)
+			activations = get_weights(summed_neighbors)
 			activations_by_degree = F.concat((activations_by_degree, activations), axis=0)
 	return activations_by_degree
 
@@ -57,7 +55,8 @@ def weights_name(layer, degree):
     return "layer_" + str(layer) + "_degree_" + str(degree) + "_filter"
 
 def bool_to_float32(features):
-	return np.array(features).astype(np.float32)
+	return np.array(((np.array, features))).astype(np.float32)
+	#return cuda.to_gpu(numpy.array(features).astype(numpy.float32))
 
 def bool_to_float32_one_dim(features):
 	vec = np.empty((0,1), dtype=np.float32)
@@ -81,11 +80,11 @@ def build_weights(self, model_params):
 		setattr(self, 'layer_output_weights_'+str(layer), L.Linear(all_layer_sizes[layer], self.model_params['fp_length'], initialW=initializer))
 
 	'''hidden weights'''
-	in_and_out_sizes = zip(all_layer_sizes[:-1], all_layer_sizes[1:])
+	in_and_out_sizes = list(zip(all_layer_sizes[:-1], all_layer_sizes[1:]))
 	for layer, (N_prev, N_cur) in enumerate(in_and_out_sizes):
 		setattr(self, 'layer_'+str(layer)+'_self_filter', L.Linear(N_prev, N_cur,initialW=initializer))
 		for degree in degrees:
-		   	name = weights_name(layer, degree)
+			name = weights_name(layer, degree)
 			setattr(self, name, L.Linear(N_prev + num_bond_features(), N_cur,initialW=initializer))
 
 class FP(Chain):
@@ -95,8 +94,7 @@ class FP(Chain):
 			build_weights(self, model_params)
 
 	def __call__(self, smiles):
-		#t = time()
-		#array_rep = array_rep_from_smiles(tuple(smiles)) #rdkitで計算。smiles to data
+		array_rep = array_rep_from_smiles(tuple(smiles)) #rdkitで計算。smiles to data
 	
 		def update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False):
 			def get_weights_func(degree): #layer と degree からパラメータを選択する。
@@ -109,19 +107,14 @@ class FP(Chain):
 			total_activations = neighbor_activations + self_activations
 			if normalize: #FPでbatch normalizationいらない
 				total_activations = F.batch_normalization(total_activations)
-			#print "update layer ", time() - t
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
-			#print "start array rep from smiles ", time() - t
-			array_rep = array_rep_from_smiles(tuple(smiles))
-			#print "array rep from smiles ", time() - t
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 
-			atom_features = bool_to_float32(atom_features)
-			bond_features = bool_to_float32(bond_features)
-			#print "change type ", time() - t
+			#atom_features = bool_to_float32(atom_features)
+			#bond_features = bool_to_float32(bond_features)
 
 			all_layer_fps = []
 			atom_activations = []
@@ -134,13 +127,12 @@ class FP(Chain):
 				all_layer_fps.append(layer_output)
 
 			num_layers = self.model_params['fp_depth']
-			for layer in xrange(num_layers):
+			for layer in range(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]
 
 			write_to_fingerprint(self, atom_features, num_layers)
-			#print "output layer fun and atom act ", time() - t
 			return sum(all_layer_fps), atom_activations, array_rep
 	
 		def output_layer_fun(self, smiles):
@@ -152,6 +144,5 @@ class FP(Chain):
 			return atom_activations, array_rep
 	
 		conv_fp_func = output_layer_fun
-		#print "end in FP ",time() - t
 		return (conv_fp_func(self, smiles))
 

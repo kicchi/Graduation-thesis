@@ -1,5 +1,4 @@
-#coding: utf-8
-import cupy as np #GPUを使うためのnumpy
+import cupy as np 
 #import numpy as np
 import chainer 
 from chainer import Link, Chain, Variable
@@ -29,7 +28,7 @@ class DNN(Chain):
 			sum_x += i
 		mean = sum_x / len(x)
 		
-		#stdの計算
+		#std
 		sum_x = 0
 		for i in x:
 			sum_x += (i - mean) ** 2	

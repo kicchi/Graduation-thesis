@@ -1,14 +1,14 @@
 #coding: utf-8
 import numpy as np
-#import cupy as cp #GPUを使うためのnumpy
+#import cupy as np #GPUを使うためのnumpy
 import chainer 
 from chainer import cuda, Function, Variable, optimizers, initializers
 from chainer import Link, Chain
 import chainer.functions as F
 import chainer.links as L
 from collections import OrderedDict
-from features import num_atom_features_from_ecfp, num_atom_features_from_fcfp, num_bond_features
-from mol_graph import graph_from_smiles_tuple, degrees
+from .features import num_atom_features_from_ecfp, num_atom_features_from_fcfp, num_bond_features
+from .mol_graph import graph_from_smiles_tuple, degrees
 
 def fast_array_from_list(xs):
     fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
@@ -56,6 +56,7 @@ def weights_name(layer, degree):
 
 def bool_to_float32(features):
 	return np.array(features).astype(np.float32)
+	#return cuda.to_gpu(np.array(features).astype(np.float32))
 
 def bool_to_float32_one_dim(features):
 	vec = np.empty((0,1), dtype=np.float32)
@@ -82,7 +83,7 @@ def build_weights(self, model_params, fp_switch):
 		setattr(self, 'layer_output_weights_'+str(layer), L.Linear(all_layer_sizes[layer], self.model_params['fp_length'], initialW=initializer))
 
 	'''hidden weights'''
-	in_and_out_sizes = zip(all_layer_sizes[:-1], all_layer_sizes[1:])
+	in_and_out_sizes = list(zip(all_layer_sizes[:-1], all_layer_sizes[1:]))
 	for layer, (N_prev, N_cur) in enumerate(in_and_out_sizes):
 		setattr(self, 'layer_'+str(layer)+'_self_filter', L.Linear(N_prev, N_cur,initialW=initializer))
 		for degree in degrees:
@@ -112,7 +113,7 @@ class ECFP(Chain): #fp_switch: ecfp is False
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
-			array_rep = array_rep_from_smiles(tuple(smiles), False)
+			#array_rep = array_rep_from_smiles(tuple(smiles), False)
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 
@@ -130,7 +131,7 @@ class ECFP(Chain): #fp_switch: ecfp is False
 				all_layer_fps.append(layer_output)
 
 			num_layers = self.model_params['fp_depth']
-			for layer in xrange(num_layers):
+			for layer in range(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]
@@ -171,8 +172,7 @@ class FCFP(Chain): #fp_switch: fcfp is True
 			return F.relu(total_activations)
 
 		def output_layer_fun_and_atom_activations(self, smiles):
-			array_rep = array_rep_from_smiles(tuple(smiles), True)
-			#print array_rep
+			#array_rep = array_rep_from_smiles(tuple(smiles), True)
 			atom_features = array_rep['atom_features']
 			bond_features = array_rep['bond_features']
 
@@ -190,7 +190,7 @@ class FCFP(Chain): #fp_switch: fcfp is True
 				all_layer_fps.append(layer_output)
 
 			num_layers = self.model_params['fp_depth']
-			for layer in xrange(num_layers):
+			for layer in range(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]

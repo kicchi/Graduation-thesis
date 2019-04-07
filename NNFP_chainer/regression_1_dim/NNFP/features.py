@@ -1,6 +1,6 @@
 import numpy as np
 from rdkit import Chem
-from util import one_of_k_encoding, one_of_k_encoding_unk
+from .util import one_of_k_encoding, one_of_k_encoding_unk
 
 def atom_features(atom):
     return np.array(one_of_k_encoding_unk(atom.GetSymbol(),

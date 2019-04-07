@@ -4,7 +4,7 @@ from rdkit import Chem
 from .util import one_of_k_encoding, one_of_k_encoding_unk
 
 def atom_features(atom):
-    return np.array(one_of_k_encoding_unk(atom.GetSymbol(),
+    bool_array = np.array(one_of_k_encoding_unk(atom.GetSymbol(),
                                       ['C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg', 'Na',
                                        'Ca', 'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl', 'Yb',
                                        'Sb', 'Sn', 'Ag', 'Pd', 'Co', 'Se', 'Ti', 'Zn', 'H',    # H?
@@ -15,15 +15,25 @@ def atom_features(atom):
                     one_of_k_encoding_unk(atom.GetImplicitValence(), [0, 1, 2, 3, 4, 5]) +
                     [atom.GetIsAromatic()]
 					)
+    ret = np.zeros(bool_array.shape, dtype = np.float32)
+    for i in range(len(bool_array)):
+        if bool_array[i]:
+            ret[i] = 1
+    return ret
 
 def bond_features(bond):
     bt = bond.GetBondType()
-    return np.array([bt == Chem.rdchem.BondType.SINGLE,
+    bool_array = np.array([bt == Chem.rdchem.BondType.SINGLE,
                      bt == Chem.rdchem.BondType.DOUBLE,
                      bt == Chem.rdchem.BondType.TRIPLE,
                      bt == Chem.rdchem.BondType.AROMATIC,
                      bond.GetIsConjugated(),
                      bond.IsInRing()])
+    ret = np.zeros(bool_array.shape, dtype = np.float32)
+    for i in range(len(bool_array)):
+        if bool_array[i]:
+            ret[i] = 1
+    return ret
 
 def num_atom_features():
     # Return length of feature vector using a very simple molecule.

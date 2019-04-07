@@ -1,0 +1,6 @@
+Loading data...
+Starting neural fingerprint experiment...
+ecfp :  (128, 50)
+ecfp_alpha :  (128, 50)
+ecfp_alpha :  variable(0.5123612)
+fcfp_alpha :  variable(0.48763877)

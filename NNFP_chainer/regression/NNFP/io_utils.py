@@ -1,7 +1,9 @@
 #coding: utf-8
 import os
 import csv
-import numpy as np
+import numpy 
+import numpy  as np
+#import cupy as np
 import matplotlib.pyplot as plt
 import itertools as it
 from rdkit import Chem
@@ -23,7 +25,7 @@ def read_csv(filename, nrows, input_name, target_name):
         for row in it.islice(reader, nrows):
             data[0].append(row[input_name])
             data[1].append(float(row[target_name]))
-    return map(np.array, data)
+    return list(map(numpy.array, data))
 
 def smiles_from_SDF(filename, sizes):
 	smiles_list = np.empty((1,1))
@@ -35,10 +37,9 @@ def smiles_from_SDF(filename, sizes):
 		if not line:
 			break
 		if line[:4] == "$$$$":
-		 	 mol = Chem.MolFromMolBlock(mol_data)
-			 #print str(Chem.MolFromMolBlock(mol_data))
-			 smiles_list = np.append(smiles_list, [[str(Chem.MolToSmiles(mol))]], axis=0)
-			 mol_data = ""
+			mol = Chem.MolFromMolBlock(mol_data)
+			smiles_list = np.append(smiles_list, [[str(Chem.MolToSmiles(mol))]], axis=0)
+			mol_data = ""
 		elif line.find("ctive"):
 			if line[0] == 'A':
 				target_list = np.append(target_list, [[1]], axis=0)

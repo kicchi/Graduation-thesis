@@ -7,8 +7,8 @@ from chainer import Link, Chain
 import chainer.functions as F
 import chainer.links as L
 from collections import OrderedDict
-from features import num_atom_features, num_bond_features
-from mol_graph import graph_from_smiles_tuple, degrees
+from .features import num_atom_features, num_bond_features
+from .mol_graph import graph_from_smiles_tuple, degrees
 
 def fast_array_from_list(xs):
     fast_array = Variable(np.empty((0,len(xs[0])), dtype=np.float32))
@@ -27,6 +27,16 @@ def array_rep_from_smiles(smiles):
                 'atom_list'     : molgraph.neighbor_list('molecule', 'atom'), # List of lists.
                 'rdkit_ix'      : molgraph.rdkit_ix_array()}  # For plotting only.
 				
+
+    #print "atom_features", len(arrayrep['atom_features']),len(arrayrep['atom_features'][0])
+    #print arrayrep['atom_features']
+    #print "bond_features", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
+    #print arrayrep['bond_features']
+    #print "atom_list", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
+    #print arrayrep['atom_list']
+    #print "rdkit_ix", len(arrayrep['bond_features']), len(arrayrep['bond_features'][0])
+    #print arrayrep['rdkit_ix']
+    #import pdb;pdb.set_trace()
     for degree in degrees:
         arrayrep[('atom_neighbors', degree)] = \
             np.array(molgraph.neighbor_list(('atom', degree), 'atom'), dtype=int)
@@ -37,6 +47,7 @@ def array_rep_from_smiles(smiles):
 
 def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights_func):
 	activations_by_degree = np.empty((0,20), dtype=np.float32)
+	#activations_by_degree = np.empty((0,1), dtype=np.float32)
 	for degree in degrees:
 		get_weights = eval(get_weights_func(degree))
 		atom_neighbors_list = array_rep[('atom_neighbors', degree)]
@@ -46,7 +57,7 @@ def matmult_neighbors(self, array_rep, atom_features, bond_features, get_weights
 								bond_features[bond_neighbors_list]]
 			stacked_neighbors = np.concatenate(neighbor_features, axis=2)
 			summed_neighbors = F.sum(stacked_neighbors,axis=1)
-  			activations = get_weights(summed_neighbors)
+			activations = get_weights(summed_neighbors)
 			activations_by_degree = F.concat((activations_by_degree, activations), axis=0)
 	return activations_by_degree
 
@@ -82,12 +93,13 @@ def build_weights(self, model_params):
 		setattr(self, 'layer_output_weights_'+str(layer), L.Linear(all_layer_sizes[layer], self.model_params['fp_length'], initialW=initializer))
 
 	'''hidden weights'''
-	in_and_out_sizes = zip(all_layer_sizes[:-1], all_layer_sizes[1:])
+	in_and_out_sizes = list(zip(all_layer_sizes[:-1], all_layer_sizes[1:]))
 	for layer, (N_prev, N_cur) in enumerate(in_and_out_sizes):
 		setattr(self, 'layer_'+str(layer)+'_self_filter', L.Linear(N_prev, N_cur,initialW=initializer))
 		for degree in degrees:
-		   	name = weights_name(layer, degree)
+			name = weights_name(layer, degree)
 			setattr(self, name, L.Linear(N_prev + num_bond_features(), N_cur,initialW=initializer))
+			#setattr(self, name, L.Linear(N_prev + 1, N_cur,initialW=initializer))
 
 class FP(Chain):
 	def __init__(self, model_params):
@@ -118,6 +130,9 @@ class FP(Chain):
 
 			atom_features = bool_to_float32(atom_features)
 			bond_features = bool_to_float32(bond_features)
+			#print (atom_features[0])
+			#atom_features = bool_to_float32_one_dim(atom_features)
+			#bond_features = bool_to_float32_one_dim(bond_features)
 
 			all_layer_fps = []
 			atom_activations = []
@@ -130,7 +145,7 @@ class FP(Chain):
 				all_layer_fps.append(layer_output)
 
 			num_layers = self.model_params['fp_depth']
-			for layer in xrange(num_layers):
+			for layer in range(num_layers):
 				write_to_fingerprint(self, atom_features, layer)
 				atom_features = update_layer(self, layer, atom_features, bond_features, array_rep, normalize=False)
 				atom_features = atom_features._data[0]
